@@ -67,96 +67,247 @@ nonterminal Unmatched, Matched;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, Designator, MethodDecl, MethodTypeName; 
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor, VarDeclList; 
 
-Program ::= (Program) PROG ProgName:p VarDeclList LBRACE MethodDeclList RBRACE 
-;
+Program ::= (Program) PROGRAM IDENT:pName AllDeclList LBRACE MethodDeclList RBRACE;
 
-ProgName ::= (ProgName) IDENT:pName 
-;
+AllDeclList ::= (ALLDeclarationsList) ALLDeclList DeclType
+              | (NoDeclaration)
+              ;
 
-VarDeclList ::= (VarDeclarations) VarDeclList VarDecl  
-				|
-				(NoVarDecl)/* epsilon */ 
-				;
-				
-VarDecl ::= (VarDecl) Type:varType IDENT:varName SEMI 
-;
+DeclType ::= (ConstDeclaration) ConstDeclExpression
+           | (VarDeclaration) VarDeclExpression
+           | (ClassDeclaration) ClassDecl
+           | (EnumDeclaration) EnumDecl
+           | (InterfaceDeclaration) InterfaceDecl
+           ;
 
-Type ::= (Type) IDENT:typeName 
-;
 
+Type ::= IDENT;
+
+
+ConstDeclExpression ::= CONST Type ConstDeclList SEMI;
+
+ConstDeclList ::= ConstDeclList COMMA ConstDecl
+                  |
+                  ConstDecl
+                  ;
+
+ConstDecl ::= IDENT:constName ASSIGNMENT ConstKind;
+
+ConstKind = NUMBER
+            |
+            CHARCONST
+            |
+            TRUE
+            |
+            FALSE
+            ;
+
+
+VarDeclExpression ::= Type VarsList SEMI;
+
+VarsList ::= VarsList COMMA VarDecl
+             |
+             VarDecl;
+
+varDecl ::= IDENT ArrOpt;
+
+ArrOpt ::= LSBRACE RSBRACE;
+
+
+ClassDecl ::= CLASS IDENT ExtendsSpec ImplementsSpec LBRACE OptVar OptMethods  RBRACE;
+
+ExtendsSpec ::= EXTENDS Type
+                |
+                ;
+
+ImplementsSpec ::= IMPLEMENTS InterfacesList
+                   |
+                   ;
+
+InterfacesList ::= InterfacesList COMMA Type
+                 | Type
+                 ;
+
+OptVar ::= VarDeclExpression
+           |
+           ;
+
+OptMethods ::= MethodDeclList
+               |
+               ;
+
+
+EnumDecl ::= ENUM IDENT:eName LBRACE EnumList RBRACE;
+
+EnumList ::= EnumList COMMA EnumMember
+            | EnumMember
+            ;
+
+EnumMember ::= IDENT Enum_Init;
+
+Enum_Init ::= ASSIGNMENT NUMBER;
+
+InterfaceDecl ::= INTERFACE IDENT LBRACE InterfaceMethodList RBRACE;
+
+InterfaceMethodList ::= InterfaceMethodList InterfaceMethodDecl
+                        |
+                        ;
+
+InterfaceMethodDecl ::= RetType IDENT LPAREN FormParms RPAREN SEMI;
+
+RetType ::= VOID | Type;
+
+FormParms ::= FormParams COMMA FormPara
+              | FormPara
+              |
+              ;
+
+FormPara ::= Type IDENT ArrOpt;
+
+////////////////////////////////
 MethodDeclList ::= (MethodDeclarations) MethodDeclList MethodDecl
 					|
 					(NoMethodDecl)/* epsilon */
 					;
 
-MethodDecl ::= (MethodDecl) MethodTypeName
-			   LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE 
-			   ;
+MethodDecl ::= (MethodDecl) RetType IDENT LPAREN FormParms RPAREN OptVar LBRACE Statement RBRACE;
 
-MethodTypeName ::= (MethodTypeName) Type:retType IDENT:methName
-;
-
-FormPars ::= (FormParams) FormalParamList | (NoFormParam) /* epsilon */ ;
-
-FormalParamList ::= (FormalParamDecls) FormalParamList COMMA FormalParamDecl
-					|
-					(SingleFormalParamDecl) FormalParamDecl
-					;
-					
-FormalParamDecl ::= (FormalParamDecl) Type IDENT ;
-
-StatementList ::= (Statements) StatementList Statement 
-					|
-				  (NoStmt) /* epsilon */
-				  ;
-
-Statement ::= (MatchedStmt) Matched | (UnmachedStmt) Unmatched ;
-
-Unmatched ::= (UnmatchedIf) IF Expr Statement | (UnmatchedIfElse) IF Expr Matched ELSE Unmatched;
-	
-				  
-Matched ::= (Assignment) Designator:dest EQUAL Expr:e SEMI 
+Statement ::= DesignatorStatement SEMI
 			  |
-			  (ErrAssignment) Designator EQUAL error SEMI
-			  {: parser.log.debug("Uspesan oporavak od greske pri dodeli vrednosti."); :}
+			  IF LPAREN Condition RPAREN Statement OptElsePart
 			  |
-			  (PrintStmt) PRINT LPAREN Expr RPAREN SEMI 
+			  FOR LPAREN OptDesignatorStatement SEMI OptCondition SEMI OptDesignatorStatement RPAREN Statement
 			  |
-			  (ReturnExpr) RETURN Expr:t SEMI
+			  BREAK SEMI
 			  |
-			  (ReturnNoExpr) RETURN SEMI
-			  | 
-			  (MatchedIf) IF Expr Matched ELSE Matched
+			  CONTINUE SEMI
 			  |
-			  (ProcCall) Designator:func LPAREN ActualPars RPAREN SEMI
+			  READ LPAREN Designator RPAREN SEMI
+			  |
+			  PRINT LPAREN Expr OptMoreToPrint RPAREN SEMI
+			  |
+			  RETURN Expr SEMI
+			  |
+			  RETURN SEMI
+			  |
+			  LBRACE Statement RBRACE
 			  ;
-			  
-Expr ::= (AddExpr) Expr:te Addop Term:t
+
+OptElsePart ::= ELSE Statement
+                |
+                ;
+
+OptDesignatorStatement ::= DesignatorStatement
+                           |
+                           ;
+
+OptCondition::= Condition
+                |
+                ;
+
+OptMoreToPrint ::= OptMoreToPrint COMMA NUMBER
+                   |
+                   COMMA NUMBER
+                   |
+                   ;
+
+//
+DesignatorStatement ::= Designator OptDesignatorStatementExtension;
+
+OptDesignatorStatementExtension ::= AssignOP Expr
+                                    |
+                                    LPAREN ActualPars RPAREN
+                                    |
+                                    INC
+                                    |
+                                    DEC
+                                    |
+                                    ;
+
+Condition ::= CondTerm OptCondTermList;
+
+OptCondTermList ::= OptCondTermList OR CondTerm
+                    |
+                    OR CondTerm
+                    |
+                    ;
+
+CondTerm ::= CondFact OptCondFactList;
+
+OptCondFactList ::= OptCondFactList AND CondFact
+                    |
+                    AND CondFact
+                    |
+                    ;
+
+CondFact ::= Expr OptRelOpExprList;
+
+OptRelOpExprList ::= OptRelOpExprList RelOp Expr
+                     |
+                     RelOp Expr
+                     |
+                     ;
+
+Expr ::= MINUS Term OptAddOpTerm
 		 |
-		 (TermExpr) Term:t
+		 Term OptAddOpTerm
 		 ;
 
-Term ::= (Term) Factor:t 
-;
+OptAddOpTerm ::= OptAddOpTerm Addop Term
+                 |
+                 Addop Term
+                 |
+                 ;
 
-Factor ::= (Const) NUMBER
-			|
-		   (Var) Designator:d
-		    |
-		   (FuncCall) Designator:func LPAREN ActualPars RPAREN
+Term ::= Factor OptMulOpFactor;
+
+OptMulOpFactor ::= OptMulOpFactor MulOp Factor
+                   |
+                   MulOp Factor
+                   |
+                   ;
+
+Factor ::= NUMBER
+		   |
+		   CHARCONST
+		   |
+		   TRUE
+		   |
+		   FALSE
+		   |
+		   NEW Type ArrayOption
+		   |
+		   Designator:d
+		   |
+		   Designator:func LPAREN ActualPars RPAREN
+		   |
+		   LPAREN Expr RPAREN
 		   ;
 
-ActualPars ::= (Actuals) ActualParamList 
-				| 
-			   (NoActuals) /* epsilon */ 
+ActualPars ::= ActualParamList
+			   |
 			   ;
 			   
-ActualParamList ::= (ActualParams) ActualParamList COMMA Expr
-					|
-					(ActualParam) Expr
+ActualParamList ::= ActualParamList COMMA Expr
+					 |
+					Expr
 					;
 
-Designator ::= (Designator) IDENT:name
-;
+Designator ::= IDENT OptDesignatorPart;
 
-Addop ::= (Addop) PLUS ;
+OptDesignatorPart ::= FieldOption
+                    | ArrayOption
+                    |
+                    ;
+
+FieldOption ::= DOT IDENT;
+
+ArrayOption ::= LSBRACE Expr RSBRACE;
+
+AssignOP ::= ASSIGNMENT;
+
+RelOp ::= EQUAL | UNEQUAL | GREATER | GREATER_EQUAL | SMALLER | SMALLER_EQUAL;
+
+Addop ::= PLUS | MINUS;
+
+MulOp ::= MUL | DIV | MOD;

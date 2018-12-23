@@ -54,7 +54,7 @@ public class sym {
     public static final int ASSIGNMENT = 31;
     public static final int INC = 32;
     public static final int DEC = 33;
-    public static final int SEMI_COLUMN = 34;
+    public static final int SEMI = 34;
     public static final int COMMA = 35;
     public static final int DOT = 36;
     public static final int LBRACE = 37;
