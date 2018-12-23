@@ -53,19 +53,27 @@ scan with {:
 	return s;
 :}
 
+terminal EOF, error;
+terminal PROGRAM, CLASS, INTERFACE, EXTENDS, NEW, ENUM, RETURN;
+terminal PRINT, READ, CONST, VOID, IF, ELSE, FOR, BREAK, CONTINUE;
+terminal PLUS, MINUS, MUL, DIV, MOD, EQUAL, UNEQUAL, GREATER;
+terminal GREATER_EQUAL, SMALLER, SMALLER_EQUAL, AND, OR, ASSIGNMENT;
+terminal INC, DEC, SEMI, COMMA, DOT, LBRACE, RBRACE, LSQBRACE;
+terminal RSQBRACE, LPAREN, RPAREN, TRUE, FALSE, IDENT, NUMBER, CHARCONST;
 
-terminal PROG, LBRACE, RBRACE, SEMI, LPAREN, RPAREN, COMMA, PRINT, RETURN, PLUS, EQUAL, VOID;
-terminal Integer NUMBER ;
-terminal String IDENT ;
-terminal IF, ELSE;
 
-nonterminal MethodDeclList, VarDecl;
-nonterminal FormalParamList, FormalParamDecl, FormPars, ActualPars, ActualParamList; 
-nonterminal StatementList, Statement, Addop;
-nonterminal Unmatched, Matched;
+nonterminal Program, AllDeclList, DeclType, Type, ConstDeclExpression, ConstDeclList, ConstDecl, ConstKind;
+nonterminal VarDeclExpression, VarsList, VarDecl, ArrOpt, ClassDecl, ExtendsSpec, ImplementsSpec, InterfacesList;
+nonterminal OptVar, OptMethods, EnumDecl, EnumList, EnumMember, EnumInit, InterfaceDecl, InterfaceMethodList;
+nonterminal InterfaceMethodDecl, RetType, FormParms, FormPara, MethodDeclList, MethodDecl;
+nonterminal Statement, OptElsePart, OptDesignatorStatement, OptCondition, OptMoreToPrint;
+nonterminal DesignatorStatement, OptDesignatorStatementExtension, Condition, OptCondTermList;
+nonterminal CondTerm, OptCondFactList, CondFact, OptRelOpExprList, Expr, OptAddOpTerm, Term, OptMulOpFactor, Factor;
+nonterminal ActualPars, ActualParamList, Designator, OptDesignatorPart, FieldOption, ArrayOption
+nonterminal AssignOP, RelOp, Addop, MulOp
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, Designator, MethodDecl, MethodTypeName; 
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor, VarDeclList; 
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor, VarDeclList;
 
 Program ::= (Program) PROGRAM IDENT:pName AllDeclList LBRACE MethodDeclList RBRACE;
 
@@ -109,7 +117,7 @@ VarsList ::= VarsList COMMA VarDecl
              |
              VarDecl;
 
-varDecl ::= IDENT ArrOpt;
+VarDecl ::= IDENT ArrOpt;
 
 ArrOpt ::= LSBRACE RSBRACE;
 
@@ -143,9 +151,9 @@ EnumList ::= EnumList COMMA EnumMember
             | EnumMember
             ;
 
-EnumMember ::= IDENT Enum_Init;
+EnumMember ::= IDENT EnumInit;
 
-Enum_Init ::= ASSIGNMENT NUMBER;
+EnumInit ::= ASSIGNMENT NUMBER;
 
 InterfaceDecl ::= INTERFACE IDENT LBRACE InterfaceMethodList RBRACE;
 
@@ -171,6 +179,7 @@ MethodDeclList ::= (MethodDeclarations) MethodDeclList MethodDecl
 					;
 
 MethodDecl ::= (MethodDecl) RetType IDENT LPAREN FormParms RPAREN OptVar LBRACE Statement RBRACE;
+
 
 Statement ::= DesignatorStatement SEMI
 			  |
