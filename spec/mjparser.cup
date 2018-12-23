@@ -89,98 +89,97 @@ DeclType ::= (ConstDeclaration) ConstDeclExpression
            ;
 
 
-Type ::= IDENT;
+Type ::= (Type) IDENT:tName;
 
 
-ConstDeclExpression ::= CONST Type ConstDeclList SEMI;
+ConstDeclExpression ::= (ConstDeclarationExpression) CONST Type:constType ConstDeclList SEMI;
 
-ConstDeclList ::= ConstDeclList COMMA ConstDecl
+ConstDeclList ::= (ConstDeclarationList) ConstDeclList COMMA ConstDecl
                   |
-                  ConstDecl
+                  (SingleConstDeclaration) ConstDecl
                   ;
 
-ConstDecl ::= IDENT:constName ASSIGNMENT ConstKind;
+ConstDecl ::= (ConstDeclaration) IDENT:constName ASSIGNMENT ConstKind:constValue;
 
-ConstKind = NUMBER
+ConstKind = (ConstNumber) NUMBER:numValue
             |
-            CHARCONST
+            (ConstChar) CHARCONST:charValue
             |
-            TRUE
+            (ConstTrue) TRUE:trueValue
             |
-            FALSE
+            (ConstFalse) FALSE:falseValue
             ;
 
 
-VarDeclExpression ::= Type VarsList SEMI;
+VarDeclExpression ::= (VarDeclarationExpression) Type:varType VarsList SEMI;
 
-VarsList ::= VarsList COMMA VarDecl
+VarsList ::= (VarsList) VarsList COMMA VarDecl
              |
-             VarDecl;
+             (SingleVarDeclaration) VarDecl;
 
-VarDecl ::= IDENT ArrOpt;
+VarDecl ::= (VarDeclaration) IDENT:varName ArrOpt;
 
-ArrOpt ::= LSBRACE RSBRACE;
+ArrOpt ::= (ArrayOption) LSBRACE RSBRACE;
 
 
-ClassDecl ::= CLASS IDENT ExtendsSpec ImplementsSpec LBRACE OptVar OptMethods  RBRACE;
+ClassDecl ::= (ClassDeclaration) CLASS IDENT:className ExtendsClause ImplementsClause LBRACE OptVar OptMethods  RBRACE;
 
-ExtendsSpec ::= EXTENDS Type
-                |
+ExtendsClause ::= (ExpendsClause) EXTENDS Type:className
+                | (NoExpendsClause)
                 ;
 
-ImplementsSpec ::= IMPLEMENTS InterfacesList
-                   |
+ImplementsClause ::= (ImplementsClause) IMPLEMENTS InterfaceList
+                   | (NoImplementsClause)
                    ;
 
-InterfacesList ::= InterfacesList COMMA Type
-                 | Type
+InterfaceList ::= (InterfaceList) InterfacesList COMMA Type:interfaceName
+                 | (SingleInterface) Type:interfaceName
                  ;
 
-OptVar ::= VarDeclExpression
-           |
+OptVar ::= (OptionalVars) VarDeclExpression
+           | (NoOptionalVars)
            ;
 
-OptMethods ::= MethodDeclList
-               |
+OptMethods ::= (OptionalMethods) MethodDeclList
+               | (NoOptionalMethods)
                ;
 
 
-EnumDecl ::= ENUM IDENT:eName LBRACE EnumList RBRACE;
+EnumDecl ::= (EnumDeclaration) ENUM IDENT:eName LBRACE EnumList RBRACE;
 
-EnumList ::= EnumList COMMA EnumMember
-            | EnumMember
+EnumList ::= (EnumList) EnumList COMMA EnumMember
+            | (SingleEnumMember) EnumMember
             ;
 
-EnumMember ::= IDENT EnumInit;
+EnumMember ::= (EnumMember) IDENT:enumMemberName EnumInit;
 
-EnumInit ::= ASSIGNMENT NUMBER;
+EnumInit ::= (EnumInit) ASSIGNMENT NUMBER:enumMemberValue;
 
-InterfaceDecl ::= INTERFACE IDENT LBRACE InterfaceMethodList RBRACE;
+InterfaceDecl ::= (InterfaceDeclaration) INTERFACE IDENT:interfaceName LBRACE InterfaceMethodList RBRACE;
 
-InterfaceMethodList ::= InterfaceMethodList InterfaceMethodDecl
-                        |
+InterfaceMethodList ::= (InterfaceMethodList) InterfaceMethodList InterfaceMethodDecl
+                        | (NoInterfaceMethods)
                         ;
 
-InterfaceMethodDecl ::= RetType IDENT LPAREN FormParms RPAREN SEMI;
+InterfaceMethodDecl ::= (InterfaceMethodDeclaration) RetType IDENT:interfaceMetodName LPAREN FormParms RPAREN SEMI;
 
-RetType ::= VOID | Type;
+RetType ::= (RetType) VOID:retVoid | Type:retType;
 
-FormParms ::= FormParams COMMA FormPara
-              | FormPara
-              |
+FormParms ::= (FormParmsDeclaration) FormParams COMMA FormPara
+              | FormPara (SingleFormParametarDeclaration)
+              | (NoFormParmsDeclaration)
               ;
 
-FormPara ::= Type IDENT ArrOpt;
+FormPara ::= Type:paramType IDENT:paramName ArrOpt;
 
-////////////////////////////////
-MethodDeclList ::= (MethodDeclarations) MethodDeclList MethodDecl
+MethodDeclList ::= (MethodDeclarationList) MethodDeclList MethodDecl
 					|
 					(NoMethodDecl)/* epsilon */
 					;
 
-MethodDecl ::= (MethodDecl) RetType IDENT LPAREN FormParms RPAREN OptVar LBRACE Statement RBRACE;
+MethodDecl ::= (MethodDecl) RetType IDENT:methodName LPAREN FormParms RPAREN OptVar LBRACE Statement RBRACE;
 
-
+////////////////////////////////
 Statement ::= DesignatorStatement SEMI
 			  |
 			  IF LPAREN Condition RPAREN Statement OptElsePart
