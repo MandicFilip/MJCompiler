@@ -80,8 +80,8 @@ import java_cup.runtime.Symbol;
 "{" 		{ return new_symbol(sym.LBRACE, yytext()); }
 "}"			{ return new_symbol(sym.RBRACE, yytext()); }
 
-"true"			{ return new_symbol(sym.TRUE, yytext()); }
-"false"			{ return new_symbol(sym.FALSE, yytext()); }
+"true"			{ return new_symbol(sym.BOOL_CONST, yytext()); }
+"false"			{ return new_symbol(sym.BOOL_CONST, yytext()); }
 
 
 <YYINITIAL> "//" 		     { yybegin(COMMENT); }

@@ -64,15 +64,14 @@ public class sym {
     public static final int LPAREN = 41;
     public static final int RPAREN = 42;
 
-    //defined const 43, 44
-    public static final int TRUE = 43;
-    public static final int FALSE = 44;
+    //defined const 43
+    public static final int BOOL_CONST = 43;
 
 
-    //identifiers and numbers 45, 46
-    public static final int IDENT = 45;
-    public static final int NUMBER = 46;
-    public static final int CHARCONST = 47;
+    //identifiers and numbers 44, 46
+    public static final int IDENT = 44;
+    public static final int NUMBER = 45;
+    public static final int CHARCONST = 46;
 
     //eol, ord, chr, int, char, bool, null
 
