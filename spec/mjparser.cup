@@ -53,8 +53,7 @@ scan with {:
 	return s;
 :}
 
-terminal EOF, error;
-terminal PROGRAM, CLASS, INTERFACE, EXTENDS, NEW, ENUM, RETURN;
+terminal PROGRAM, NEW, ENUM, RETURN;
 terminal PRINT, READ, CONST, VOID, IF, ELSE, FOR, BREAK, CONTINUE;
 terminal PLUS, MINUS, MUL, DIV, MOD, EQUAL, UNEQUAL, GREATER;
 terminal GREATER_EQUAL, SMALLER, SMALLER_EQUAL, AND, OR, ASSIGNMENT;
@@ -65,30 +64,28 @@ terminal String CHARCONST;
 terminal Integer NUMBER;
 terminal Boolean BOOL_CONST;
 
-nonterminal Program, AllDeclList, DeclType, Type, ConstDeclExpression, ConstDeclList, ConstDecl, ConstKind;
-nonterminal VarDeclExpression, VarsList, VarDecl, ArrOpt, ClassDecl, ExtendsSpec, ImplementsSpec, InterfacesList;
-nonterminal OptVar, OptMethods, EnumDecl, EnumList, EnumMember, EnumInit, InterfaceDecl, InterfaceMethodList;
-nonterminal InterfaceMethodDecl, RetType, FormParms, FormPara, MethodDeclList, MethodDecl;
+nonterminal AllDeclList, DeclType, ConstDeclExpression, ConstDeclList, ConstDecl, ConstKind;
+nonterminal VarDeclExpression, VarsList, VarDecl, OptVar, ArrOpt;
+nonterminal EnumDecl, EnumList, EnumMember, EnumInit;
+nonterminal RetType, FormParams, FormPara, MethodDeclList;
 nonterminal StatementList, Statement, OptElsePart, OptDesignatorStatement, OptCondition, OptMoreToPrint;
 nonterminal DesignatorStatement, OptDesignatorStatementExtension, Condition, OptCondTermList;
-nonterminal CondTerm, OptCondFactList, CondFact, OptRelOpExprList, Expr, OptAddOpTerm, Term, OptMulOpFactor, Factor;
-nonterminal ActualPars, ActualParamList, Designator, OptDesignatorPart, FieldOption, ArrayOption;
+nonterminal CondTerm, OptCondFactList, CondFact, OptRelOpExprList, OptAddOpTerm, OptMulOpFactor;
+nonterminal ActualPars, ActualParamList, OptDesignatorPart, FieldOption, ArrayOption;
 nonterminal AssignOP, RelOp, Addop, MulOp;
 
-nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, Designator, MethodDecl, MethodTypeName;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor, VarDeclList;
+nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, Designator, MethodDecl;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor;
 
 Program ::= (Program) PROGRAM IDENT:pName AllDeclList LBRACE MethodDeclList RBRACE;
 
-AllDeclList ::= (ALLDeclarationsList) ALLDeclList DeclType
+AllDeclList ::= (ALLDeclarationsList) AllDeclList DeclType
               | (NoDeclaration)
               ;
 
 DeclType ::= (ConstDeclaration) ConstDeclExpression
            | (VarDeclaration) VarDeclExpression
-           | (ClassDeclaration) ClassDecl
            | (EnumDeclaration) EnumDecl
-           | (InterfaceDeclaration) InterfaceDecl
            ;
 
 
@@ -104,13 +101,12 @@ ConstDeclList ::= (ConstDeclarationList) ConstDeclList COMMA ConstDecl
 
 ConstDecl ::= (ConstDeclaration) IDENT:constName ASSIGNMENT ConstKind:constValue;
 
-ConstKind = (ConstNumber) NUMBER:numValue
+ConstKind ::= (ConstNumber) NUMBER:numValue
             |
             (ConstChar) CHARCONST:charValue
             |
             (ConstBool) BOOL_CONST:boolValue
             ;
-
 
 VarDeclExpression ::= (VarDeclarationExpression) Type:varType VarsList SEMI;
 
@@ -120,33 +116,9 @@ VarsList ::= (VarsList) VarsList COMMA VarDecl
 
 VarDecl ::= (VarDeclaration) IDENT:varName ArrOpt;
 
-ArrOpt ::= (ArrayOption) LSBRACE RSBRACE
+ArrOpt ::= (ArrayOption) LSQBRACE RSQBRACE
             |
             (NoArrayOption);
-
-
-ClassDecl ::= (ClassDeclaration) CLASS IDENT:className ExtendsClause ImplementsClause LBRACE OptVar OptMethods  RBRACE;
-
-ExtendsClause ::= (ExpendsClause) EXTENDS Type:className
-                | (NoExpendsClause)
-                ;
-
-ImplementsClause ::= (ImplementsClause) IMPLEMENTS InterfaceList
-                   | (NoImplementsClause)
-                   ;
-
-InterfaceList ::= (InterfaceList) InterfacesList COMMA Type:interfaceName
-                 | (SingleInterface) Type:interfaceName
-                 ;
-
-OptVar ::= (OptionalVars) VarDeclExpression
-           | (NoOptionalVars)
-           ;
-
-OptMethods ::= (OptionalMethods) MethodDeclList
-               | (NoOptionalMethods)
-               ;
-
 
 EnumDecl ::= (EnumDeclaration) ENUM IDENT:eName LBRACE EnumList RBRACE;
 
@@ -158,31 +130,21 @@ EnumMember ::= (EnumMember) IDENT:enumMemberName EnumInit;
 
 EnumInit ::= (EnumInit) ASSIGNMENT NUMBER:enumMemberValue;
 
-InterfaceDecl ::= (InterfaceDeclaration) INTERFACE IDENT:interfaceName LBRACE InterfaceMethodList RBRACE;
+RetType ::= (RetVoid) VOID:retVoid | (RetType) Type:retType;
 
-InterfaceMethodList ::= (InterfaceMethodList) InterfaceMethodList InterfaceMethodDecl
-                        | (NoInterfaceMethods)
-                        ;
-
-InterfaceMethodDecl ::= (InterfaceMethodDeclaration) RetType IDENT:interfaceMetodName LPAREN FormParms RPAREN SEMI;
-
-RetType ::= (RetType) VOID:retVoid | Type:retType;
-
-FormParms ::= (FormParmsDeclaration) FormParams COMMA FormPara
-              | FormPara (SingleFormParametarDeclaration)
-              | (NoFormParmsDeclaration)
+FormParams ::= (FormParamsDeclaration) FormParams COMMA FormPara
+              | (SingleFormParametarDeclaration) FormPara
+              | (NoFormParamsDeclaration)
               ;
 
-FormPara ::= Type:paramType IDENT:paramName ArrOpt;
+FormPara ::= (FormalParams) Type:paramType IDENT:paramName ArrOpt;
 
 MethodDeclList ::= (MethodDeclarationList) MethodDeclList MethodDecl
 					|
 					(NoMethodDecl)/* epsilon */
 					;
 
-MethodDecl ::= (MethodDecl) RetType IDENT:methodName LPAREN FormParms RPAREN OptVar LBRACE Statement RBRACE;
-
-////////////////////////////////
+MethodDecl ::= (MethodDecl) RetType IDENT:methodName LPAREN FormParams RPAREN OptVar LBRACE Statement RBRACE;
 
 StatementList ::= (StatementList) StatementList Statement
                     |
@@ -232,7 +194,7 @@ OptMoreToPrint ::= (PrintExtensionList) OptMoreToPrint COMMA NUMBER:value
                    (NoPrintExtension)
                    ;
 
-//
+
 DesignatorStatement ::= (DesignatorStatement) Designator:dest OptDesignatorStatementExtension;
 
 OptDesignatorStatementExtension ::= (AssignExtension) AssignOP Expr:expValue
@@ -326,7 +288,7 @@ OptDesignatorPart ::= (OptionalFieldDesignatorPart) FieldOption
 
 FieldOption ::= (Field) DOT IDENT:desField;
 
-ArrayOption ::= (Array) LSBRACE Expr:arrExp RSBRACE;
+ArrayOption ::= (Array) LSQBRACE Expr:arrExp RSQBRACE;
 
 AssignOP ::= (Assignment) ASSIGNMENT;
 

@@ -23,7 +23,7 @@
             <arg value="-destdir"/>
             <arg value="rs/ac/bg/etf/pp1"/>
             <arg value="-ast"/>
-            <arg value="rs.ac.bg.etf.pp1.ast"/>
+            <arg value="src.rs.ac.bg.etf.pp1.ast"/>
             <arg value="-parser"/>
             <arg value="MJParser"/>
             <arg value="-buildtree"/>
