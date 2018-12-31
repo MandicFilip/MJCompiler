@@ -8,47 +8,47 @@ import rs.ac.bg.etf.pp1.ast.*;
 
 
 parser code {:
-	
+
 	boolean errorDetected = false;
-	
+
 	Logger log = Logger.getLogger(getClass());
-   
-   
+
+
     // slede redefinisani metodi za prijavu gresaka radi izmene teksta poruke
-     
+
     public void report_fatal_error(String message, Object info) throws java.lang.Exception {
       done_parsing();
       report_error(message, info);
     }
-  
+
     public void syntax_error(Symbol cur_token) {
         report_error("\nSintaksna greska", cur_token);
     }
-  
+
     public void unrecovered_syntax_error(Symbol cur_token) throws java.lang.Exception {
         report_fatal_error("Fatalna greska, parsiranje se ne moze nastaviti", cur_token);
     }
 
     public void report_error(String message, Object info) {
     	errorDetected = true;
-    	StringBuilder msg = new StringBuilder(message); 
+    	StringBuilder msg = new StringBuilder(message);
     	if (info instanceof Symbol)
             msg.append (" na liniji ").append(((Symbol)info).left);
         log.error(msg.toString());
     }
-    
+
     public void report_info(String message, Object info) {
-    	StringBuilder msg = new StringBuilder(message); 
+    	StringBuilder msg = new StringBuilder(message);
     	if (info instanceof Symbol)
             msg.append (" na liniji ").append(((Symbol)info).left);
         log.info(msg.toString());
     }
-    
+
 :}
 
 scan with {:
 	Symbol s = this.getScanner().next_token();
-	if (s != null && s.value != null) 
+	if (s != null && s.value != null)
 		log.info(s.toString() + " " + s.value.toString());
 	return s;
 :}
@@ -59,20 +59,23 @@ terminal PRINT, READ, CONST, VOID, IF, ELSE, FOR, BREAK, CONTINUE;
 terminal PLUS, MINUS, MUL, DIV, MOD, EQUAL, UNEQUAL, GREATER;
 terminal GREATER_EQUAL, SMALLER, SMALLER_EQUAL, AND, OR, ASSIGNMENT;
 terminal INC, DEC, SEMI, COMMA, DOT, LBRACE, RBRACE, LSQBRACE;
-terminal RSQBRACE, LPAREN, RPAREN, TRUE, FALSE, IDENT, NUMBER, CHARCONST;
-
+terminal RSQBRACE, LPAREN, RPAREN;
+terminal String IDENT;
+terminal String CHARCONST;
+terminal Integer NUMBER;
+terminal Boolean BOOL_CONST;
 
 nonterminal Program, AllDeclList, DeclType, Type, ConstDeclExpression, ConstDeclList, ConstDecl, ConstKind;
 nonterminal VarDeclExpression, VarsList, VarDecl, ArrOpt, ClassDecl, ExtendsSpec, ImplementsSpec, InterfacesList;
 nonterminal OptVar, OptMethods, EnumDecl, EnumList, EnumMember, EnumInit, InterfaceDecl, InterfaceMethodList;
 nonterminal InterfaceMethodDecl, RetType, FormParms, FormPara, MethodDeclList, MethodDecl;
-nonterminal Statement, OptElsePart, OptDesignatorStatement, OptCondition, OptMoreToPrint;
+nonterminal StatementList, Statement, OptElsePart, OptDesignatorStatement, OptCondition, OptMoreToPrint;
 nonterminal DesignatorStatement, OptDesignatorStatementExtension, Condition, OptCondTermList;
 nonterminal CondTerm, OptCondFactList, CondFact, OptRelOpExprList, Expr, OptAddOpTerm, Term, OptMulOpFactor, Factor;
-nonterminal ActualPars, ActualParamList, Designator, OptDesignatorPart, FieldOption, ArrayOption
-nonterminal AssignOP, RelOp, Addop, MulOp
+nonterminal ActualPars, ActualParamList, Designator, OptDesignatorPart, FieldOption, ArrayOption;
+nonterminal AssignOP, RelOp, Addop, MulOp;
 
-nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, Designator, MethodDecl, MethodTypeName; 
+nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, Designator, MethodDecl, MethodTypeName;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor, VarDeclList;
 
 Program ::= (Program) PROGRAM IDENT:pName AllDeclList LBRACE MethodDeclList RBRACE;
@@ -105,9 +108,7 @@ ConstKind = (ConstNumber) NUMBER:numValue
             |
             (ConstChar) CHARCONST:charValue
             |
-            (ConstTrue) TRUE:trueValue
-            |
-            (ConstFalse) FALSE:falseValue
+            (ConstBool) BOOL_CONST:boolValue
             ;
 
 
@@ -119,7 +120,9 @@ VarsList ::= (VarsList) VarsList COMMA VarDecl
 
 VarDecl ::= (VarDeclaration) IDENT:varName ArrOpt;
 
-ArrOpt ::= (ArrayOption) LSBRACE RSBRACE;
+ArrOpt ::= (ArrayOption) LSBRACE RSBRACE
+            |
+            (NoArrayOption);
 
 
 ClassDecl ::= (ClassDeclaration) CLASS IDENT:className ExtendsClause ImplementsClause LBRACE OptVar OptMethods  RBRACE;
@@ -180,142 +183,160 @@ MethodDeclList ::= (MethodDeclarationList) MethodDeclList MethodDecl
 MethodDecl ::= (MethodDecl) RetType IDENT:methodName LPAREN FormParms RPAREN OptVar LBRACE Statement RBRACE;
 
 ////////////////////////////////
-Statement ::= DesignatorStatement SEMI
+
+StatementList ::= (StatementList) StatementList Statement
+                    |
+                  (NoStatementList)
+                    ;
+
+Statement ::= (DesignatorStatement) DesignatorStatement SEMI
 			  |
-			  IF LPAREN Condition RPAREN Statement OptElsePart
+			  (IfStatement) IF LPAREN Condition RPAREN Statement OptElsePart
 			  |
-			  FOR LPAREN OptDesignatorStatement SEMI OptCondition SEMI OptDesignatorStatement RPAREN Statement
+			  (ForStatement) FOR LPAREN OptDesignatorStatement SEMI OptCondition SEMI OptDesignatorStatement RPAREN Statement
 			  |
-			  BREAK SEMI
+			  (BreakStatement) BREAK SEMI
 			  |
-			  CONTINUE SEMI
+			  (ContinueStatement) CONTINUE SEMI
 			  |
-			  READ LPAREN Designator RPAREN SEMI
+			  (ReadStatement) READ LPAREN Designator:dest RPAREN SEMI
 			  |
-			  PRINT LPAREN Expr OptMoreToPrint RPAREN SEMI
+			  (PrintStatement) PRINT LPAREN Expr:exprToPrint OptMoreToPrint RPAREN SEMI
 			  |
-			  RETURN Expr SEMI
+			  (ReturnExpStatement) RETURN Expr:retExp SEMI
 			  |
-			  RETURN SEMI
+			  (ReturnNopStatement) RETURN SEMI
 			  |
-			  LBRACE Statement RBRACE
+			  (StatementBlock) LBRACE Statement RBRACE
 			  ;
 
-OptElsePart ::= ELSE Statement
+OptElsePart ::= (ElseOption) ELSE Statement
                 |
+                (NoElseOption)
                 ;
 
-OptDesignatorStatement ::= DesignatorStatement
+OptDesignatorStatement ::= (DesignatorStatement) DesignatorStatement
                            |
+                           (NoDesignatorStatement)
                            ;
 
-OptCondition::= Condition
+OptCondition::= (Condition) Condition
                 |
+                (NoCondition)
                 ;
 
-OptMoreToPrint ::= OptMoreToPrint COMMA NUMBER
+OptMoreToPrint ::= (PrintExtensionList) OptMoreToPrint COMMA NUMBER:value
                    |
-                   COMMA NUMBER
+                   (SinglePrintExtension) COMMA NUMBER:value
                    |
+                   (NoPrintExtension)
                    ;
 
 //
-DesignatorStatement ::= Designator OptDesignatorStatementExtension;
+DesignatorStatement ::= (DesignatorStatement) Designator:dest OptDesignatorStatementExtension;
 
-OptDesignatorStatementExtension ::= AssignOP Expr
+OptDesignatorStatementExtension ::= (AssignExtension) AssignOP Expr:expValue
                                     |
-                                    LPAREN ActualPars RPAREN
+                                    (ParametarsExtension) LPAREN ActualPars RPAREN
                                     |
-                                    INC
+                                    (IncExtension) INC
                                     |
-                                    DEC
+                                    (DecExtension) DEC
                                     |
+                                    (NoExtension)
                                     ;
 
-Condition ::= CondTerm OptCondTermList;
+Condition ::= (Condition) CondTerm OptCondTermList;
 
-OptCondTermList ::= OptCondTermList OR CondTerm
+OptCondTermList ::= (ConditionList) OptCondTermList OR CondTerm
                     |
-                    OR CondTerm
+                    (OrSingleCondition) OR CondTerm
                     |
+                    (NoConditionList)
                     ;
 
-CondTerm ::= CondFact OptCondFactList;
+CondTerm ::= (ConditionTerm) CondFact OptCondFactList;
 
-OptCondFactList ::= OptCondFactList AND CondFact
+OptCondFactList ::= (ConditionFactorList) OptCondFactList AND CondFact
                     |
-                    AND CondFact
+                    (AndConditionFactor) AND CondFact
                     |
+                    (NoConditionFactor)
                     ;
 
-CondFact ::= Expr OptRelOpExprList;
+CondFact ::= (ConditionFactor) Expr OptRelOpExprList;
 
-OptRelOpExprList ::= OptRelOpExprList RelOp Expr
+OptRelOpExprList ::= (RelOpWithExprList) OptRelOpExprList RelOp Expr
                      |
-                     RelOp Expr
+                     (SingleRelOpWithExpr) RelOp Expr
                      |
+                     (NoRelOpWithExpr)
                      ;
 
-Expr ::= MINUS Term OptAddOpTerm
+Expr ::= (ExprWithUnMinus) MINUS Term OptAddOpTerm
 		 |
-		 Term OptAddOpTerm
+		 (ExprWithoutMinus) Term OptAddOpTerm
 		 ;
 
-OptAddOpTerm ::= OptAddOpTerm Addop Term
+OptAddOpTerm ::= (OptionalAddOpTermList) OptAddOpTerm Addop Term
                  |
-                 Addop Term
+                 (SingleOptionalAddOpTerm) Addop Term
                  |
                  ;
 
-Term ::= Factor OptMulOpFactor;
+Term ::= (Term) Factor OptMulOpFactor;
 
-OptMulOpFactor ::= OptMulOpFactor MulOp Factor
+OptMulOpFactor ::= (TermWithOptionalMulOpList) OptMulOpFactor MulOp Factor
                    |
-                   MulOp Factor
+                   (SingleTermWithOptionalMulOp) MulOp Factor
                    |
                    ;
 
-Factor ::= NUMBER
+Factor ::= (NumberFactor) NUMBER:valueNumber
 		   |
-		   CHARCONST
+		   (CharFactor) CHARCONST:valueChar
 		   |
-		   TRUE
+		   (BoolFactor) BOOL_CONST:valBool
 		   |
-		   FALSE
+		   (NewTypeFactor) NEW Type ArrayOption
 		   |
-		   NEW Type ArrayOption
+		   (DesignatorFactor) Designator:d
 		   |
-		   Designator:d
+		   (FunCallFactor) Designator:func LPAREN ActualPars RPAREN
 		   |
-		   Designator:func LPAREN ActualPars RPAREN
-		   |
-		   LPAREN Expr RPAREN
+		   (ParenFactor) LPAREN Expr RPAREN
 		   ;
 
-ActualPars ::= ActualParamList
+ActualPars ::= (ActualParametarsList) ActualParamList
 			   |
+			   (NoActualParametarsList)
 			   ;
-			   
-ActualParamList ::= ActualParamList COMMA Expr
+
+ActualParamList ::= (ParametarsList) ActualParamList COMMA Expr
 					 |
-					Expr
-					;
+					 (SingleExpr) Expr
+					 ;
 
-Designator ::= IDENT OptDesignatorPart;
+Designator ::= (Designator) IDENT:dest OptDesignatorPart;
 
-OptDesignatorPart ::= FieldOption
-                    | ArrayOption
-                    |
+OptDesignatorPart ::= (OptionalFieldDesignatorPart) FieldOption
+                    | (OptionalArrayDesignatorPart) ArrayOption
+                    | (NoOptionalPart)
                     ;
 
-FieldOption ::= DOT IDENT;
+FieldOption ::= (Field) DOT IDENT:desField;
 
-ArrayOption ::= LSBRACE Expr RSBRACE;
+ArrayOption ::= (Array) LSBRACE Expr:arrExp RSBRACE;
 
-AssignOP ::= ASSIGNMENT;
+AssignOP ::= (Assignment) ASSIGNMENT;
 
-RelOp ::= EQUAL | UNEQUAL | GREATER | GREATER_EQUAL | SMALLER | SMALLER_EQUAL;
+RelOp ::= (Equal) EQUAL
+        | (Unequal) UNEQUAL
+        | (Greater) GREATER
+        | (GreaterEqual) GREATER_EQUAL
+        | (Smaller)SMALLER
+        | (SmallerEqual) SMALLER_EQUAL;
 
-Addop ::= PLUS | MINUS;
+Addop ::= (PlusOp) PLUS | (MinusOp) MINUS;
 
-MulOp ::= MUL | DIV | MOD;
+MulOp ::= (MulOp) MUL | (DivOp) DIV | (ModOp) MOD;
