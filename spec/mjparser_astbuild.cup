@@ -175,10 +175,10 @@ MethodDeclList ::= (MethodDeclarationList) MethodDeclList:M1 MethodDecl:M2 {: RE
 					(NoMethodDecl) {: RESULT=new NoMethodDecl(); :}/* epsilon */
 					;
 
-MethodDecl ::= (MethodDecl) RetType:R1 IDENT:methodName LPAREN FormParams:F2 RPAREN OptVar:O3 LBRACE Statement:S4 RBRACE {: RESULT=new MethodDecl(R1, methodName, F2, O3, S4); RESULT.setLine(R1left); :};
+MethodDecl ::= (MethodDecl) RetType:R1 IDENT:methodName LPAREN FormParams:F2 RPAREN OptVar:O3 LBRACE StatementList:S4 RBRACE {: RESULT=new MethodDecl(R1, methodName, F2, O3, S4); RESULT.setLine(R1left); :};
 
 StatementList ::= (StatementList) StatementList:S1 Statement:S2 {: RESULT=new StatementList(S1, S2); RESULT.setLine(S1left); :}
-                    |
+                  |
                   (NoStatementList) {: RESULT=new NoStatementList(); :}
                     ;
 
