@@ -88,17 +88,13 @@ nonterminal Statement Statement;
 nonterminal OptElsePart OptElsePart;
 nonterminal OptDesignatorStatement OptDesignatorStatement;
 nonterminal OptCondition OptCondition;
-nonterminal OptMoreToPrint OptMoreToPrint;
+nonterminal ExpressionToPrint ExpressionToPrint;
 nonterminal DesignatorStatement DesignatorStatement;
 nonterminal OptDesignatorStatementExtension OptDesignatorStatementExtension;
 nonterminal Condition Condition;
-nonterminal OptCondTermList OptCondTermList;
 nonterminal CondTerm CondTerm;
-nonterminal OptCondFactList OptCondFactList;
 nonterminal CondFact CondFact;
-nonterminal OptRelOpExprList OptRelOpExprList;
-nonterminal OptAddOpTerm OptAddOpTerm;
-nonterminal OptMulOpFactor OptMulOpFactor;
+nonterminal SignTerm SignTerm;
 nonterminal ActualPars ActualPars;
 nonterminal ActualParamList ActualParamList;
 nonterminal OptDesignatorPart OptDesignatorPart;
@@ -198,7 +194,7 @@ Statement ::= (DesignatorStatement) DesignatorStatement:D1 SEMI {: RESULT=new De
 			  |
 			  (ReadStatement) READ LPAREN Designator:dest RPAREN SEMI {: RESULT=new ReadStatement(dest); RESULT.setLine(destleft); :}
 			  |
-			  (PrintStatement) PRINT LPAREN Expr:exprToPrint OptMoreToPrint:O1 RPAREN SEMI {: RESULT=new PrintStatement(exprToPrint, O1); RESULT.setLine(exprToPrintleft); :}
+			  (PrintStatement) PRINT LPAREN  ExpressionToPrint:E1 RPAREN SEMI {: RESULT=new PrintStatement(E1); RESULT.setLine(E1left); :}
 			  |
 			  (ReturnExpStatement) RETURN Expr:retExp SEMI {: RESULT=new ReturnExpStatement(retExp); RESULT.setLine(retExpleft); :}
 			  |
@@ -222,12 +218,10 @@ OptCondition::= (Condition) Condition:C1 {: RESULT=new Condition(C1); RESULT.set
                 (NoCondition) {: RESULT=new NoCondition(); :}
                 ;
 
-OptMoreToPrint ::= (PrintExtensionList) OptMoreToPrint:O1 COMMA NUMBER:value {: RESULT=new PrintExtensionList(O1, value); RESULT.setLine(O1left); :}
-                   |
-                   (SinglePrintExtension) COMMA NUMBER:value {: RESULT=new SinglePrintExtension(value); RESULT.setLine(valueleft); :}
-                   |
-                   (NoPrintExtension) {: RESULT=new NoPrintExtension(); :}
-                   ;
+ExpressionToPrint ::= (ExpressionToPrintList) ExpressionToPrint:E1 COMMA NUMBER:value {: RESULT=new ExpressionToPrintList(E1, value); RESULT.setLine(E1left); :}
+                      |
+                      (SingleExpressionToPrint) Expr:exprToPrint {: RESULT=new SingleExpressionToPrint(exprToPrint); RESULT.setLine(exprToPrintleft); :}
+                      ;
 
 
 DesignatorStatement ::= (DesignatorStatement) Designator:dest OptDesignatorStatementExtension:O1 {: RESULT=new DesignatorStatement(dest, O1); RESULT.setLine(destleft); :};
@@ -243,51 +237,30 @@ OptDesignatorStatementExtension ::= (AssignExtension) AssignOP:A1 Expr:expValue 
                                     (NoExtension) {: RESULT=new NoExtension(); :}
                                     ;
 
-Condition ::= (Condition) CondTerm:C1 OptCondTermList:O2 {: RESULT=new Condition(C1, O2); RESULT.setLine(C1left); :};
+Condition ::= (TermListCondition) Condition:C1 OR CondTerm:C2 {: RESULT=new TermListCondition(C1, C2); RESULT.setLine(C1left); :}
+              |
+              (SingleTermCondition) CondTerm:C1 {: RESULT=new SingleTermCondition(C1); RESULT.setLine(C1left); :}
+              ;
 
-OptCondTermList ::= (ConditionList) OptCondTermList:O1 OR CondTerm:C2 {: RESULT=new ConditionList(O1, C2); RESULT.setLine(O1left); :}
-                    |
-                    (OrSingleCondition) OR CondTerm:C1 {: RESULT=new OrSingleCondition(C1); RESULT.setLine(C1left); :}
-                    |
-                    (NoConditionList) {: RESULT=new NoConditionList(); :}
-                    ;
+CondTerm ::= (CondFactListTerm) CondFact:C1 AND CondFact:C2 {: RESULT=new CondFactListTerm(C1, C2); RESULT.setLine(C1left); :}
+             |
+             (SingleCondFactTerm) CondFact:C1 {: RESULT=new SingleCondFactTerm(C1); RESULT.setLine(C1left); :};
 
-CondTerm ::= (ConditionTerm) CondFact:C1 OptCondFactList:O2 {: RESULT=new ConditionTerm(C1, O2); RESULT.setLine(C1left); :};
+CondFact ::= (ConditionFactor) CondFact:C1 RelOp:R2 Expr:E3 {: RESULT=new ConditionFactor(C1, R2, E3); RESULT.setLine(C1left); :}
+                | (SingleCondFact) Expr:E1 {: RESULT=new SingleCondFact(E1); RESULT.setLine(E1left); :}
+                ;
 
-OptCondFactList ::= (ConditionFactorList) OptCondFactList:O1 AND CondFact:C2 {: RESULT=new ConditionFactorList(O1, C2); RESULT.setLine(O1left); :}
-                    |
-                    (AndConditionFactor) AND CondFact:C1 {: RESULT=new AndConditionFactor(C1); RESULT.setLine(C1left); :}
-                    |
-                    (NoConditionFactor) {: RESULT=new NoConditionFactor(); :}
-                    ;
+Expr ::= (TermListExpr) Expr:E1 Addop:A2 Term:T3 {: RESULT=new TermListExpr(E1, A2, T3); RESULT.setLine(E1left); :}
+          |
+          (SingleTermExpr) SignTerm:S1 {: RESULT=new SingleTermExpr(S1); RESULT.setLine(S1left); :};
 
-CondFact ::= (ConditionFactor) Expr:E1 OptRelOpExprList:O2 {: RESULT=new ConditionFactor(E1, O2); RESULT.setLine(E1left); :};
+SignTerm ::= (MinusTerm) MINUS Term:T1 {: RESULT=new MinusTerm(T1); RESULT.setLine(T1left); :}
+             |
+             (NoSignTerm) Term:T1 {: RESULT=new NoSignTerm(T1); RESULT.setLine(T1left); :};
 
-OptRelOpExprList ::= (RelOpWithExprList) OptRelOpExprList:O1 RelOp:R2 Expr:E3 {: RESULT=new RelOpWithExprList(O1, R2, E3); RESULT.setLine(O1left); :}
-                     |
-                     (SingleRelOpWithExpr) RelOp:R1 Expr:E2 {: RESULT=new SingleRelOpWithExpr(R1, E2); RESULT.setLine(R1left); :}
-                     |
-                     (NoRelOpWithExpr) {: RESULT=new NoRelOpWithExpr(); :}
-                     ;
-
-Expr ::= (ExprWithUnMinus) MINUS Term:T1 OptAddOpTerm:O2 {: RESULT=new ExprWithUnMinus(T1, O2); RESULT.setLine(T1left); :}
-		 |
-		 (ExprWithoutMinus) Term:T1 OptAddOpTerm:O2 {: RESULT=new ExprWithoutMinus(T1, O2); RESULT.setLine(T1left); :}
-		 ;
-
-OptAddOpTerm ::= (OptionalAddOpTermList) OptAddOpTerm:O1 Addop:A2 Term:T3 {: RESULT=new OptionalAddOpTermList(O1, A2, T3); RESULT.setLine(O1left); :}
-                 |
-                 (SingleOptionalAddOpTerm) Addop:A1 Term:T2 {: RESULT=new SingleOptionalAddOpTerm(A1, T2); RESULT.setLine(A1left); :}
-                 | {: RESULT=new OptAddOpTermDerived1(); :}
-                 ;
-
-Term ::= (Term) Factor:F1 OptMulOpFactor:O2 {: RESULT=new Term(F1, O2); RESULT.setLine(F1left); :};
-
-OptMulOpFactor ::= (TermWithOptionalMulOpList) OptMulOpFactor:O1 MulOp:M2 Factor:F3 {: RESULT=new TermWithOptionalMulOpList(O1, M2, F3); RESULT.setLine(O1left); :}
-                   |
-                   (SingleTermWithOptionalMulOp) MulOp:M1 Factor:F2 {: RESULT=new SingleTermWithOptionalMulOp(M1, F2); RESULT.setLine(M1left); :}
-                   | {: RESULT=new OptMulOpFactorDerived1(); :}
-                   ;
+Term ::= (FactorListTerm) Term:T1 MulOp:M2 Factor:F3 {: RESULT=new FactorListTerm(T1, M2, F3); RESULT.setLine(T1left); :}
+         |
+         (SingleFactorTerm) Factor:F1 {: RESULT=new SingleFactorTerm(F1); RESULT.setLine(F1left); :};
 
 Factor ::= (NumberFactor) NUMBER:valueNumber {: RESULT=new NumberFactor(valueNumber); RESULT.setLine(valueNumberleft); :}
 		   |

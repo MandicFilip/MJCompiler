@@ -68,9 +68,9 @@ nonterminal AllDeclList, DeclType, ConstDeclExpression, ConstDeclList, ConstDecl
 nonterminal VarDeclExpression, VarsList, VarDecl, OptVar, ArrOpt;
 nonterminal EnumDecl, EnumList, EnumMember, EnumInit;
 nonterminal RetType, FormParams, FormPara, MethodDeclList;
-nonterminal StatementList, Statement, OptElsePart, OptDesignatorStatement, OptCondition, OptMoreToPrint;
-nonterminal DesignatorStatement, OptDesignatorStatementExtension, Condition, OptCondTermList;
-nonterminal CondTerm, OptCondFactList, CondFact, OptRelOpExprList, OptAddOpTerm, OptMulOpFactor;
+nonterminal StatementList, Statement, OptElsePart, OptDesignatorStatement, OptCondition, ExpressionToPrint;
+nonterminal DesignatorStatement, OptDesignatorStatementExtension, Condition;
+nonterminal CondTerm, CondFact, SignTerm;
 nonterminal ActualPars, ActualParamList, OptDesignatorPart, FieldOption, ArrayOption;
 nonterminal AssignOP, RelOp, Addop, MulOp;
 
@@ -163,7 +163,7 @@ Statement ::= (DesignatorStatement) DesignatorStatement SEMI
 			  |
 			  (ReadStatement) READ LPAREN Designator:dest RPAREN SEMI
 			  |
-			  (PrintStatement) PRINT LPAREN Expr:exprToPrint OptMoreToPrint RPAREN SEMI
+			  (PrintStatement) PRINT LPAREN  ExpressionToPrint RPAREN SEMI
 			  |
 			  (ReturnExpStatement) RETURN Expr:retExp SEMI
 			  |
@@ -187,12 +187,10 @@ OptCondition::= (Condition) Condition
                 (NoCondition)
                 ;
 
-OptMoreToPrint ::= (PrintExtensionList) OptMoreToPrint COMMA NUMBER:value
-                   |
-                   (SinglePrintExtension) COMMA NUMBER:value
-                   |
-                   (NoPrintExtension)
-                   ;
+ExpressionToPrint ::= (ExpressionToPrintList) ExpressionToPrint COMMA NUMBER:value
+                      |
+                      (SingleExpressionToPrint) Expr:exprToPrint
+                      ;
 
 
 DesignatorStatement ::= (DesignatorStatement) Designator:dest OptDesignatorStatementExtension;
@@ -208,51 +206,30 @@ OptDesignatorStatementExtension ::= (AssignExtension) AssignOP Expr:expValue
                                     (NoExtension)
                                     ;
 
-Condition ::= (Condition) CondTerm OptCondTermList;
+Condition ::= (TermListCondition) Condition OR CondTerm
+              |
+              (SingleTermCondition) CondTerm
+              ;
 
-OptCondTermList ::= (ConditionList) OptCondTermList OR CondTerm
-                    |
-                    (OrSingleCondition) OR CondTerm
-                    |
-                    (NoConditionList)
-                    ;
+CondTerm ::= (CondFactListTerm) CondFact AND CondFact
+             |
+             (SingleCondFactTerm) CondFact;
 
-CondTerm ::= (ConditionTerm) CondFact OptCondFactList;
+CondFact ::= (ConditionFactor) CondFact RelOp Expr
+                | (SingleCondFact) Expr
+                ;
 
-OptCondFactList ::= (ConditionFactorList) OptCondFactList AND CondFact
-                    |
-                    (AndConditionFactor) AND CondFact
-                    |
-                    (NoConditionFactor)
-                    ;
+Expr ::= (TermListExpr) Expr Addop Term
+          |
+          (SingleTermExpr) SignTerm;
 
-CondFact ::= (ConditionFactor) Expr OptRelOpExprList;
+SignTerm ::= (MinusTerm) MINUS Term
+             |
+             (NoSignTerm) Term;
 
-OptRelOpExprList ::= (RelOpWithExprList) OptRelOpExprList RelOp Expr
-                     |
-                     (SingleRelOpWithExpr) RelOp Expr
-                     |
-                     (NoRelOpWithExpr)
-                     ;
-
-Expr ::= (ExprWithUnMinus) MINUS Term OptAddOpTerm
-		 |
-		 (ExprWithoutMinus) Term OptAddOpTerm
-		 ;
-
-OptAddOpTerm ::= (OptionalAddOpTermList) OptAddOpTerm Addop Term
-                 |
-                 (SingleOptionalAddOpTerm) Addop Term
-                 |
-                 ;
-
-Term ::= (Term) Factor OptMulOpFactor;
-
-OptMulOpFactor ::= (TermWithOptionalMulOpList) OptMulOpFactor MulOp Factor
-                   |
-                   (SingleTermWithOptionalMulOp) MulOp Factor
-                   |
-                   ;
+Term ::= (FactorListTerm) Term MulOp Factor
+         |
+         (SingleFactorTerm) Factor;
 
 Factor ::= (NumberFactor) NUMBER:valueNumber
 		   |
