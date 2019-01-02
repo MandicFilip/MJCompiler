@@ -75,6 +75,7 @@ nonterminal VarsList VarsList;
 nonterminal VarDecl VarDecl;
 nonterminal OptVar OptVar;
 nonterminal ArrOpt ArrOpt;
+nonterminal ArrWithExpr ArrWithExpr;
 nonterminal EnumDecl EnumDecl;
 nonterminal EnumList EnumList;
 nonterminal EnumMember EnumMember;
@@ -85,13 +86,12 @@ nonterminal FormPara FormPara;
 nonterminal MethodDeclList MethodDeclList;
 nonterminal StatementList StatementList;
 nonterminal Statement Statement;
-nonterminal OptElsePart OptElsePart;
 nonterminal OptDesignatorStatement OptDesignatorStatement;
 nonterminal OptCondition OptCondition;
 nonterminal ExpressionToPrint ExpressionToPrint;
-nonterminal DesignatorStatement DesignatorStatement;
+nonterminal DesignatorStmt DesignatorStmt;
 nonterminal OptDesignatorStatementExtension OptDesignatorStatementExtension;
-nonterminal Condition Condition;
+nonterminal ConditionDecl ConditionDecl;
 nonterminal CondTerm CondTerm;
 nonterminal CondFact CondFact;
 nonterminal SignTerm SignTerm;
@@ -99,14 +99,20 @@ nonterminal ActualPars ActualPars;
 nonterminal ActualParamList ActualParamList;
 nonterminal OptDesignatorPart OptDesignatorPart;
 nonterminal FieldOption FieldOption;
-nonterminal ArrayOption ArrayOption;
 nonterminal AssignOP AssignOP;
 nonterminal RelOp RelOp;
 nonterminal Addop Addop;
 nonterminal MulOp MulOp;
 
-nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, Designator, MethodDecl;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor;
+nonterminal Program Program;
+nonterminal Designator Designator;
+nonterminal MethodDecl MethodDecl;
+nonterminal Type Type;
+nonterminal Term Term;
+nonterminal Expr Expr;
+nonterminal Factor Factor;
+
+precedence left ELSE;
 
 Program ::= (Program) PROGRAM IDENT:pName AllDeclList:A1 LBRACE MethodDeclList:M2 RBRACE {: RESULT=new Program(pName, A1, M2); RESULT.setLine(pNameleft); :};
 
@@ -114,9 +120,9 @@ AllDeclList ::= (ALLDeclarationsList) AllDeclList:A1 DeclType:D2 {: RESULT=new A
               | (NoDeclaration) {: RESULT=new NoDeclaration(); :}
               ;
 
-DeclType ::= (ConstDeclaration) ConstDeclExpression:C1 {: RESULT=new ConstDeclaration(C1); RESULT.setLine(C1left); :}
-           | (VarDeclaration) VarDeclExpression:V1 {: RESULT=new VarDeclaration(V1); RESULT.setLine(V1left); :}
-           | (EnumDeclaration) EnumDecl:E1 {: RESULT=new EnumDeclaration(E1); RESULT.setLine(E1left); :}
+DeclType ::= (ConstTypeDeclaration) ConstDeclExpression:C1 {: RESULT=new ConstTypeDeclaration(C1); RESULT.setLine(C1left); :}
+           | (VarTypeDeclaration) VarDeclExpression:V1 {: RESULT=new VarTypeDeclaration(V1); RESULT.setLine(V1left); :}
+           | (EnumTypeDeclaration) EnumDecl:E1 {: RESULT=new EnumTypeDeclaration(E1); RESULT.setLine(E1left); :}
            ;
 
 
@@ -180,11 +186,13 @@ MethodDecl ::= (MethodDecl) RetType:R1 IDENT:methodName LPAREN FormParams:F2 RPA
 StatementList ::= (StatementList) StatementList:S1 Statement:S2 {: RESULT=new StatementList(S1, S2); RESULT.setLine(S1left); :}
                   |
                   (NoStatementList) {: RESULT=new NoStatementList(); :}
-                    ;
+                  ;
 
-Statement ::= (DesignatorStatement) DesignatorStatement:D1 SEMI {: RESULT=new DesignatorStatement(D1); RESULT.setLine(D1left); :}
+Statement ::= (DesignatorStatement) DesignatorStmt:D1 SEMI {: RESULT=new DesignatorStatement(D1); RESULT.setLine(D1left); :}
 			  |
-			  (IfStatement) IF LPAREN Condition:C1 RPAREN Statement:S2 OptElsePart:O3 {: RESULT=new IfStatement(C1, S2, O3); RESULT.setLine(C1left); :}
+			  (IfStatement) IF LPAREN ConditionDecl:C1 RPAREN Statement:S2 {: RESULT=new IfStatement(C1, S2); RESULT.setLine(C1left); :}
+			  |
+			  (IfElseStatement) IF LPAREN ConditionDecl:C1 RPAREN Statement:S2 ELSE Statement:S3 {: RESULT=new IfElseStatement(C1, S2, S3); RESULT.setLine(C1left); :}
 			  |
 			  (ForStatement) FOR LPAREN OptDesignatorStatement:O1 SEMI OptCondition:O2 SEMI OptDesignatorStatement:O3 RPAREN Statement:S4 {: RESULT=new ForStatement(O1, O2, O3, S4); RESULT.setLine(O1left); :}
 			  |
@@ -203,17 +211,12 @@ Statement ::= (DesignatorStatement) DesignatorStatement:D1 SEMI {: RESULT=new De
 			  (StatementBlock) LBRACE Statement:S1 RBRACE {: RESULT=new StatementBlock(S1); RESULT.setLine(S1left); :}
 			  ;
 
-OptElsePart ::= (ElseOption) ELSE Statement:S1 {: RESULT=new ElseOption(S1); RESULT.setLine(S1left); :}
-                |
-                (NoElseOption) {: RESULT=new NoElseOption(); :}
-                ;
-
-OptDesignatorStatement ::= (DesignatorStatement) DesignatorStatement:D1 {: RESULT=new DesignatorStatement(D1); RESULT.setLine(D1left); :}
+OptDesignatorStatement ::= (SingleDesignatorStatement) DesignatorStmt:D1 {: RESULT=new SingleDesignatorStatement(D1); RESULT.setLine(D1left); :}
                            |
                            (NoDesignatorStatement) {: RESULT=new NoDesignatorStatement(); :}
                            ;
 
-OptCondition::= (Condition) Condition:C1 {: RESULT=new Condition(C1); RESULT.setLine(C1left); :}
+OptCondition::= (Condition) ConditionDecl:C1 {: RESULT=new Condition(C1); RESULT.setLine(C1left); :}
                 |
                 (NoCondition) {: RESULT=new NoCondition(); :}
                 ;
@@ -224,7 +227,7 @@ ExpressionToPrint ::= (ExpressionToPrintList) ExpressionToPrint:E1 COMMA NUMBER:
                       ;
 
 
-DesignatorStatement ::= (DesignatorStatement) Designator:dest OptDesignatorStatementExtension:O1 {: RESULT=new DesignatorStatement(dest, O1); RESULT.setLine(destleft); :};
+DesignatorStmt ::= (DesignatorStatementDef) Designator:dest OptDesignatorStatementExtension:O1 {: RESULT=new DesignatorStatementDef(dest, O1); RESULT.setLine(destleft); :};
 
 OptDesignatorStatementExtension ::= (AssignExtension) AssignOP:A1 Expr:expValue {: RESULT=new AssignExtension(A1, expValue); RESULT.setLine(A1left); :}
                                     |
@@ -237,7 +240,7 @@ OptDesignatorStatementExtension ::= (AssignExtension) AssignOP:A1 Expr:expValue 
                                     (NoExtension) {: RESULT=new NoExtension(); :}
                                     ;
 
-Condition ::= (TermListCondition) Condition:C1 OR CondTerm:C2 {: RESULT=new TermListCondition(C1, C2); RESULT.setLine(C1left); :}
+ConditionDecl ::= (TermListCondition) ConditionDecl:C1 OR CondTerm:C2 {: RESULT=new TermListCondition(C1, C2); RESULT.setLine(C1left); :}
               |
               (SingleTermCondition) CondTerm:C1 {: RESULT=new SingleTermCondition(C1); RESULT.setLine(C1left); :}
               ;
@@ -247,8 +250,8 @@ CondTerm ::= (CondFactListTerm) CondFact:C1 AND CondFact:C2 {: RESULT=new CondFa
              (SingleCondFactTerm) CondFact:C1 {: RESULT=new SingleCondFactTerm(C1); RESULT.setLine(C1left); :};
 
 CondFact ::= (ConditionFactor) CondFact:C1 RelOp:R2 Expr:E3 {: RESULT=new ConditionFactor(C1, R2, E3); RESULT.setLine(C1left); :}
-                | (SingleCondFact) Expr:E1 {: RESULT=new SingleCondFact(E1); RESULT.setLine(E1left); :}
-                ;
+           | (SingleCondFact) Expr:E1 {: RESULT=new SingleCondFact(E1); RESULT.setLine(E1left); :}
+           ;
 
 Expr ::= (TermListExpr) Expr:E1 Addop:A2 Term:T3 {: RESULT=new TermListExpr(E1, A2, T3); RESULT.setLine(E1left); :}
           |
@@ -262,19 +265,19 @@ Term ::= (FactorListTerm) Term:T1 MulOp:M2 Factor:F3 {: RESULT=new FactorListTer
          |
          (SingleFactorTerm) Factor:F1 {: RESULT=new SingleFactorTerm(F1); RESULT.setLine(F1left); :};
 
-Factor ::= (NumberFactor) NUMBER:valueNumber {: RESULT=new NumberFactor(valueNumber); RESULT.setLine(valueNumberleft); :}
+Factor ::= (ParenFactor) LPAREN Expr:E1 RPAREN {: RESULT=new ParenFactor(E1); RESULT.setLine(E1left); :}
 		   |
 		   (CharFactor) CHARCONST:valueChar {: RESULT=new CharFactor(valueChar); RESULT.setLine(valueCharleft); :}
 		   |
 		   (BoolFactor) BOOL_CONST:valBool {: RESULT=new BoolFactor(valBool); RESULT.setLine(valBoolleft); :}
 		   |
-		   (NewTypeFactor) NEW Type:T1 ArrayOption:A2 {: RESULT=new NewTypeFactor(T1, A2); RESULT.setLine(T1left); :}
+		   (NewTypeFactor) NEW Type:T1 ArrWithExpr:A2 {: RESULT=new NewTypeFactor(T1, A2); RESULT.setLine(T1left); :}
 		   |
 		   (DesignatorFactor) Designator:d {: RESULT=new DesignatorFactor(d); RESULT.setLine(dleft); :}
 		   |
 		   (FunCallFactor) Designator:func LPAREN ActualPars:A1 RPAREN {: RESULT=new FunCallFactor(func, A1); RESULT.setLine(funcleft); :}
 		   |
-		   (ParenFactor) LPAREN Expr:E1 RPAREN {: RESULT=new ParenFactor(E1); RESULT.setLine(E1left); :}
+		   (NumberFactor) NUMBER:valueNumber {: RESULT=new NumberFactor(valueNumber); RESULT.setLine(valueNumberleft); :}
 		   ;
 
 ActualPars ::= (ActualParametarsList) ActualParamList:A1 {: RESULT=new ActualParametarsList(A1); RESULT.setLine(A1left); :}
@@ -290,13 +293,13 @@ ActualParamList ::= (ParametarsList) ActualParamList:A1 COMMA Expr:E2 {: RESULT=
 Designator ::= (Designator) IDENT:dest OptDesignatorPart:O1 {: RESULT=new Designator(dest, O1); RESULT.setLine(destleft); :};
 
 OptDesignatorPart ::= (OptionalFieldDesignatorPart) FieldOption:F1 {: RESULT=new OptionalFieldDesignatorPart(F1); RESULT.setLine(F1left); :}
-                    | (OptionalArrayDesignatorPart) ArrayOption:A1 {: RESULT=new OptionalArrayDesignatorPart(A1); RESULT.setLine(A1left); :}
+                    | (OptionalArrayDesignatorPart) ArrWithExpr:A1 {: RESULT=new OptionalArrayDesignatorPart(A1); RESULT.setLine(A1left); :}
                     | (NoOptionalPart) {: RESULT=new NoOptionalPart(); :}
                     ;
 
 FieldOption ::= (Field) DOT IDENT:desField {: RESULT=new Field(desField); RESULT.setLine(desFieldleft); :};
 
-ArrayOption ::= (Array) LSQBRACE Expr:arrExp RSQBRACE {: RESULT=new Array(arrExp); RESULT.setLine(arrExpleft); :};
+ArrWithExpr ::= (ArrayWithExpr) LSQBRACE Expr:arrExp RSQBRACE {: RESULT=new ArrayWithExpr(arrExp); RESULT.setLine(arrExpleft); :};
 
 AssignOP ::= (Assignment) ASSIGNMENT {: RESULT=new Assignment(); :};
 
