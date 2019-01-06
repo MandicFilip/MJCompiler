@@ -84,7 +84,7 @@ nonterminal RetType RetType;
 nonterminal FormParams FormParams;
 nonterminal FormPara FormPara;
 nonterminal MethodDeclList MethodDeclList;
-nonterminal StatementList StatementList;
+nonterminal Statements Statements;
 nonterminal Statement Statement;
 nonterminal OptDesignatorStatement OptDesignatorStatement;
 nonterminal OptCondition OptCondition;
@@ -147,7 +147,7 @@ ConstKind ::= (ConstNumber) NUMBER:numValue {: RESULT=new ConstNumber(numValue);
 
 VarDeclExpression ::= (VarDeclarationExpression) Type:varType VarsList:V1 SEMI {: RESULT=new VarDeclarationExpression(varType, V1); RESULT.setLine(varTypeleft); :};
 
-VarsList ::= (VarsList) VarsList:V1 COMMA VarDecl:V2 {: RESULT=new VarsList(V1, V2); RESULT.setLine(V1left); :}
+VarsList ::= (VariablesList) VarsList:V1 COMMA VarDecl:V2 {: RESULT=new VariablesList(V1, V2); RESULT.setLine(V1left); :}
              |
              (SingleVarDeclaration) VarDecl:V1 {: RESULT=new SingleVarDeclaration(V1); RESULT.setLine(V1left); :};
 
@@ -159,7 +159,7 @@ ArrOpt ::= (ArrayOption) LSQBRACE RSQBRACE {: RESULT=new ArrayOption(); :}
 
 EnumDecl ::= (EnumDeclaration) ENUM IDENT:eName LBRACE EnumList:E1 RBRACE {: RESULT=new EnumDeclaration(eName, E1); RESULT.setLine(eNameleft); :};
 
-EnumList ::= (EnumList) EnumList:E1 COMMA EnumMember:E2 {: RESULT=new EnumList(E1, E2); RESULT.setLine(E1left); :}
+EnumList ::= (EnumMembersList) EnumList:E1 COMMA EnumMember:E2 {: RESULT=new EnumMembersList(E1, E2); RESULT.setLine(E1left); :}
             | (SingleEnumMember) EnumMember:E1 {: RESULT=new SingleEnumMember(E1); RESULT.setLine(E1left); :}
             ;
 
@@ -167,7 +167,7 @@ EnumMember ::= (EnumMember) IDENT:enumMemberName EnumInit:E1 {: RESULT=new EnumM
 
 EnumInit ::= (EnumInit) ASSIGNMENT NUMBER:enumMemberValue {: RESULT=new EnumInit(enumMemberValue); RESULT.setLine(enumMemberValueleft); :};
 
-RetType ::= (RetVoid) VOID:retVoid {: RESULT=new RetVoid(); :} | (RetType) Type:retType {: RESULT=new RetType(retType); RESULT.setLine(retTypeleft); :};
+RetType ::= (RetVoid) VOID:retVoid {: RESULT=new RetVoid(); :} | (ReturnType) Type:retType {: RESULT=new ReturnType(retType); RESULT.setLine(retTypeleft); :};
 
 FormParams ::= (FormParamsDeclaration) FormParams:F1 COMMA FormPara:F2 {: RESULT=new FormParamsDeclaration(F1, F2); RESULT.setLine(F1left); :}
               | (SingleFormParametarDeclaration) FormPara:F1 {: RESULT=new SingleFormParametarDeclaration(F1); RESULT.setLine(F1left); :}
@@ -181,9 +181,9 @@ MethodDeclList ::= (MethodDeclarationList) MethodDeclList:M1 MethodDecl:M2 {: RE
 					(NoMethodDecl) {: RESULT=new NoMethodDecl(); :}/* epsilon */
 					;
 
-MethodDecl ::= (MethodDecl) RetType:R1 IDENT:methodName LPAREN FormParams:F2 RPAREN OptVar:O3 LBRACE StatementList:S4 RBRACE {: RESULT=new MethodDecl(R1, methodName, F2, O3, S4); RESULT.setLine(R1left); :};
+MethodDecl ::= (MethodDecl) RetType:R1 IDENT:methodName LPAREN FormParams:F2 RPAREN OptVar:O3 LBRACE Statements:S4 RBRACE {: RESULT=new MethodDecl(R1, methodName, F2, O3, S4); RESULT.setLine(R1left); :};
 
-StatementList ::= (StatementList) StatementList:S1 Statement:S2 {: RESULT=new StatementList(S1, S2); RESULT.setLine(S1left); :}
+Statements ::= (StatementList) Statements:S1 Statement:S2 {: RESULT=new StatementList(S1, S2); RESULT.setLine(S1left); :}
                   |
                   (NoStatementList) {: RESULT=new NoStatementList(); :}
                   ;

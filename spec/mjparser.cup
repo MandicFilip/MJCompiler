@@ -68,7 +68,7 @@ nonterminal AllDeclList, DeclType, ConstDeclExpression, ConstDeclList, ConstDecl
 nonterminal VarDeclExpression, VarsList, VarDecl, OptVar, ArrOpt, ArrWithExpr;
 nonterminal EnumDecl, EnumList, EnumMember, EnumInit;
 nonterminal RetType, FormParams, FormPara, MethodDeclList;
-nonterminal StatementList, Statement, OptDesignatorStatement, OptCondition, ExpressionToPrint;
+nonterminal Statements, Statement, OptDesignatorStatement, OptCondition, ExpressionToPrint;
 nonterminal DesignatorStmt, OptDesignatorStatementExtension, ConditionDecl;
 nonterminal CondTerm, CondFact, SignTerm;
 nonterminal ActualPars, ActualParamList, OptDesignatorPart, FieldOption;
@@ -112,7 +112,7 @@ ConstKind ::= (ConstNumber) NUMBER:numValue
 
 VarDeclExpression ::= (VarDeclarationExpression) Type:varType VarsList SEMI;
 
-VarsList ::= (VarsList) VarsList COMMA VarDecl
+VarsList ::= (VariablesList) VarsList COMMA VarDecl
              |
              (SingleVarDeclaration) VarDecl;
 
@@ -124,7 +124,7 @@ ArrOpt ::= (ArrayOption) LSQBRACE RSQBRACE
 
 EnumDecl ::= (EnumDeclaration) ENUM IDENT:eName LBRACE EnumList RBRACE;
 
-EnumList ::= (EnumList) EnumList COMMA EnumMember
+EnumList ::= (EnumMembersList) EnumList COMMA EnumMember
             | (SingleEnumMember) EnumMember
             ;
 
@@ -132,7 +132,7 @@ EnumMember ::= (EnumMember) IDENT:enumMemberName EnumInit;
 
 EnumInit ::= (EnumInit) ASSIGNMENT NUMBER:enumMemberValue;
 
-RetType ::= (RetVoid) VOID:retVoid | (RetType) Type:retType;
+RetType ::= (RetVoid) VOID:retVoid | (ReturnType) Type:retType;
 
 FormParams ::= (FormParamsDeclaration) FormParams COMMA FormPara
               | (SingleFormParametarDeclaration) FormPara
@@ -146,9 +146,9 @@ MethodDeclList ::= (MethodDeclarationList) MethodDeclList MethodDecl
 					(NoMethodDecl)/* epsilon */
 					;
 
-MethodDecl ::= (MethodDecl) RetType IDENT:methodName LPAREN FormParams RPAREN OptVar LBRACE StatementList RBRACE;
+MethodDecl ::= (MethodDecl) RetType IDENT:methodName LPAREN FormParams RPAREN OptVar LBRACE Statements RBRACE;
 
-StatementList ::= (StatementList) StatementList Statement
+Statements ::= (StatementList) Statements Statement
                   |
                   (NoStatementList)
                   ;
