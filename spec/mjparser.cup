@@ -65,14 +65,14 @@ terminal Integer NUMBER;
 terminal Boolean BOOL_CONST;
 
 nonterminal AllDeclList, DeclType, ConstDeclExpression, ConstDeclList, ConstDecl, ConstKind;
-nonterminal VarDeclExpression, VarsList, VarDecl, OptVar, ArrOpt, ArrWithExpr;
+nonterminal VarDeclExpression, VarsList, VarDecl, Variables, LastVarDecl, MiddleVarDecl, OptVar, ArrOpt, ArrWithExpr;
 nonterminal EnumDecl, EnumList, EnumMember, EnumInit;
 nonterminal RetType, FormParams, FormPara, MethodDeclList;
 nonterminal Statements, Statement, OptDesignatorStatement, OptCondition, ExpressionToPrint;
-nonterminal DesignatorStmt, OptDesignatorStatementExtension, ConditionDecl;
+nonterminal DesignatorStmt, OptDesignatorStatementExtension, ConditionDecl, IfConditionForm;
 nonterminal CondTerm, CondFact, SignTerm;
 nonterminal ActualPars, ActualParamList, OptDesignatorPart, FieldOption;
-nonterminal AssignOP, RelOp, Addop, MulOp;
+nonterminal AssignOp, RelOp, Addop, MulOp;
 
 nonterminal Program, Designator, MethodDecl;
 nonterminal Type, Term, Expr, Factor;
@@ -110,11 +110,26 @@ ConstKind ::= (ConstNumber) NUMBER:numValue
             (ConstBool) BOOL_CONST:boolValue
             ;
 
-VarDeclExpression ::= (VarDeclarationExpression) Type:varType VarsList SEMI;
+VarDeclExpression ::= (VarDeclarationExpression) Type:varType Variables;
 
-VarsList ::= (VariablesList) VarsList COMMA VarDecl
+Variables ::= (Variables) VarsList LastVarDecl;
+
+VarsList ::= (VariablesList) VarsList MiddleVarDecl
              |
-             (SingleVarDeclaration) VarDecl;
+             (NoVarsDeclaration)
+             ;
+
+LastVarDecl ::= (LastVarDeclaration) VarDecl SEMI
+                |
+                error SEMI
+                {: parser.report_error("Bad variable declaration ", null); :}
+                ;
+
+MiddleVarDecl ::= (MiddleVarDeclaration) VarDecl COMMA
+                   |
+                   error COMMA:l
+                   {: parser.report_error("Bad variable declaration ", null); :}
+                   ;
 
 VarDecl ::= (VarDeclaration) IDENT:varName ArrOpt;
 
@@ -137,6 +152,9 @@ RetType ::= (RetVoid) VOID:retVoid | (ReturnType) Type:retType;
 FormParams ::= (FormParamsDeclaration) FormParams COMMA FormPara
               | (SingleFormParametarDeclaration) FormPara
               | (NoFormParamsDeclaration)
+              |
+              error
+              {: parser.report_error("Bad formal argument  ", null); :}
               ;
 
 FormPara ::= (FormalParams) Type:paramType IDENT:paramName ArrOpt;
@@ -155,9 +173,12 @@ Statements ::= (StatementList) Statements Statement
 
 Statement ::= (DesignatorStatement) DesignatorStmt SEMI
 			  |
-			  (IfStatement) IF LPAREN ConditionDecl RPAREN Statement
+			  Designator AssignOp error SEMI:l
+              {: parser.report_error("Bad assignment statement ", null); :}
 			  |
-			  (IfElseStatement) IF LPAREN ConditionDecl RPAREN Statement ELSE Statement
+			  (IfStatement) IF IfConditionForm Statement
+			  |
+			  (IfElseStatement) IF IfConditionForm Statement ELSE Statement
 			  |
 			  (ForStatement) FOR LPAREN OptDesignatorStatement SEMI OptCondition SEMI OptDesignatorStatement RPAREN Statement
 			  |
@@ -181,6 +202,12 @@ OptDesignatorStatement ::= (SingleDesignatorStatement) DesignatorStmt
                            (NoDesignatorStatement)
                            ;
 
+IfConditionForm ::= (IfCondition) LPAREN ConditionDecl RPAREN
+                    |
+                    LPAREN error RPAREN:l
+                    {: parser.report_error("Bad condition ", null); :}
+                    ;
+
 OptCondition::= (Condition) ConditionDecl
                 |
                 (NoCondition)
@@ -194,7 +221,7 @@ ExpressionToPrint ::= (ExpressionToPrintList) ExpressionToPrint COMMA NUMBER:val
 
 DesignatorStmt ::= (DesignatorStatementDef) Designator:dest OptDesignatorStatementExtension;
 
-OptDesignatorStatementExtension ::= (AssignExtension) AssignOP Expr:expValue
+OptDesignatorStatementExtension ::= (AssignExtension) AssignOp Expr:expValue
                                     |
                                     (ParametarsExtension) LPAREN ActualPars RPAREN
                                     |
@@ -266,7 +293,7 @@ FieldOption ::= (Field) DOT IDENT:desField;
 
 ArrWithExpr ::= (ArrayWithExpr) LSQBRACE Expr:arrExp RSQBRACE;
 
-AssignOP ::= (Assignment) ASSIGNMENT;
+AssignOp ::= (Assignment) ASSIGNMENT;
 
 RelOp ::= (Equal) EQUAL
         | (Unequal) UNEQUAL
