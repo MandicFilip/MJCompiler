@@ -60,7 +60,7 @@ terminal GREATER_EQUAL, SMALLER, SMALLER_EQUAL, AND, OR, ASSIGNMENT;
 terminal INC, DEC, SEMI, COMMA, DOT, LBRACE, RBRACE, LSQBRACE;
 terminal RSQBRACE, LPAREN, RPAREN;
 terminal String IDENT;
-terminal String CHARCONST;
+terminal Character CHARCONST;
 terminal Integer NUMBER;
 terminal Boolean BOOL_CONST;
 
@@ -137,7 +137,7 @@ ArrOpt ::= (ArrayOption) LSQBRACE RSQBRACE
             |
             (NoArrayOption);
 
-EnumDecl ::= (EnumDeclaration) ENUM IDENT:eName LBRACE EnumList RBRACE;
+EnumDecl ::= (EnumDeclaration) ENUM IDENT:eName LBRACE EnumList RBRACE SEMI;
 
 EnumList ::= (EnumMembersList) EnumList COMMA EnumMember
             | (SingleEnumMember) EnumMember
@@ -145,7 +145,10 @@ EnumList ::= (EnumMembersList) EnumList COMMA EnumMember
 
 EnumMember ::= (EnumMember) IDENT:enumMemberName EnumInit;
 
-EnumInit ::= (EnumInit) ASSIGNMENT NUMBER:enumMemberValue;
+EnumInit ::= (SingleEnumInit) ASSIGNMENT NUMBER:enumMemberValue
+              |
+              (NoEnumInit)
+              ;
 
 RetType ::= (RetVoid) VOID:retVoid | (ReturnType) Type:retType;
 
