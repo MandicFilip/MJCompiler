@@ -83,6 +83,7 @@ nonterminal EnumDecl EnumDecl;
 nonterminal EnumList EnumList;
 nonterminal EnumMember EnumMember;
 nonterminal EnumInit EnumInit;
+nonterminal VarDeclExpressionList VarDeclExpressionList;
 nonterminal RetType RetType;
 nonterminal FormParams FormParams;
 nonterminal FormPara FormPara;
@@ -102,7 +103,7 @@ nonterminal SignTerm SignTerm;
 nonterminal ActualPars ActualPars;
 nonterminal ActualParamList ActualParamList;
 nonterminal OptDesignatorPart OptDesignatorPart;
-nonterminal FieldOption FieldOption;
+nonterminal EnumOption EnumOption;
 nonterminal AssignOp AssignOp;
 nonterminal RelOp RelOp;
 nonterminal Addop Addop;
@@ -172,11 +173,21 @@ MiddleVarDecl ::= (MiddleVarDeclaration) VarDecl:V1 COMMA {: RESULT=new MiddleVa
 
 VarDecl ::= (VarDeclaration) IDENT:varName ArrOpt:A1 {: RESULT=new VarDeclaration(varName, A1); RESULT.setLine(varNameleft); :};
 
+OptVar ::= (OptVarsList) VarDeclExpressionList:V1 {: RESULT=new OptVarsList(V1); RESULT.setLine(V1left); :}
+            |
+            (NoOptVarsList) {: RESULT=new NoOptVarsList(); :}
+            ;
+
+VarDeclExpressionList ::= (OptVarDeclExpressionList) VarDeclExpressionList:V1 VarDeclExpression:V2 {: RESULT=new OptVarDeclExpressionList(V1, V2); RESULT.setLine(V1left); :}
+                          |
+                          (SingleOptVarDecl) VarDeclExpression:V1 {: RESULT=new SingleOptVarDecl(V1); RESULT.setLine(V1left); :}
+                          ;
+
 ArrOpt ::= (ArrayOption) LSQBRACE RSQBRACE {: RESULT=new ArrayOption(); :}
             |
             (NoArrayOption) {: RESULT=new NoArrayOption(); :};
 
-EnumDecl ::= (EnumDeclaration) ENUM IDENT:eName LBRACE EnumList:E1 RBRACE SEMI {: RESULT=new EnumDeclaration(eName, E1); RESULT.setLine(eNameleft); :};
+EnumDecl ::= (EnumDeclaration) ENUM IDENT:eName LBRACE EnumList:E1 RBRACE {: RESULT=new EnumDeclaration(eName, E1); RESULT.setLine(eNameleft); :};
 
 EnumList ::= (EnumMembersList) EnumList:E1 COMMA EnumMember:E2 {: RESULT=new EnumMembersList(E1, E2); RESULT.setLine(E1left); :}
             | (SingleEnumMember) EnumMember:E1 {: RESULT=new SingleEnumMember(E1); RESULT.setLine(E1left); :}
@@ -236,7 +247,7 @@ Statement ::= (DesignatorStatement) DesignatorStmt:D1 SEMI {: RESULT=new Designa
 			  |
 			  (ReturnNopStatement) RETURN SEMI {: RESULT=new ReturnNopStatement(); :}
 			  |
-			  (StatementBlock) LBRACE Statement:S1 RBRACE {: RESULT=new StatementBlock(S1); RESULT.setLine(S1left); :}
+			  (StatementBlock) LBRACE Statements:S1 RBRACE {: RESULT=new StatementBlock(S1); RESULT.setLine(S1left); :}
 			  ;
 
 OptDesignatorStatement ::= (SingleDesignatorStatement) DesignatorStmt:D1 {: RESULT=new SingleDesignatorStatement(D1); RESULT.setLine(D1left); :}
@@ -326,12 +337,12 @@ ActualParamList ::= (ParametarsList) ActualParamList:A1 COMMA Expr:E2 {: RESULT=
 
 Designator ::= (Designator) IDENT:dest OptDesignatorPart:O1 {: RESULT=new Designator(dest, O1); RESULT.setLine(destleft); :};
 
-OptDesignatorPart ::= (OptionalFieldDesignatorPart) FieldOption:F1 {: RESULT=new OptionalFieldDesignatorPart(F1); RESULT.setLine(F1left); :}
+OptDesignatorPart ::= (OptionalEnumDesignatorPart) EnumOption:E1 {: RESULT=new OptionalEnumDesignatorPart(E1); RESULT.setLine(E1left); :}
                     | (OptionalArrayDesignatorPart) ArrWithExpr:A1 {: RESULT=new OptionalArrayDesignatorPart(A1); RESULT.setLine(A1left); :}
                     | (NoOptionalPart) {: RESULT=new NoOptionalPart(); :}
                     ;
 
-FieldOption ::= (Field) DOT IDENT:desField {: RESULT=new Field(desField); RESULT.setLine(desFieldleft); :};
+EnumOption ::= (Field) DOT IDENT:desField {: RESULT=new Field(desField); RESULT.setLine(desFieldleft); :};
 
 ArrWithExpr ::= (ArrayWithExpr) LSQBRACE Expr:arrExp RSQBRACE {: RESULT=new ArrayWithExpr(arrExp); RESULT.setLine(arrExpleft); :};
 

@@ -66,12 +66,12 @@ terminal Boolean BOOL_CONST;
 
 nonterminal AllDeclList, DeclType, ConstDeclExpression, ConstDeclList, ConstDecl, ConstKind;
 nonterminal VarDeclExpression, VarsList, VarDecl, Variables, LastVarDecl, MiddleVarDecl, OptVar, ArrOpt, ArrWithExpr;
-nonterminal EnumDecl, EnumList, EnumMember, EnumInit;
+nonterminal EnumDecl, EnumList, EnumMember, EnumInit, VarDeclExpressionList;
 nonterminal RetType, FormParams, FormPara, MethodDeclList;
 nonterminal Statements, Statement, OptDesignatorStatement, OptCondition, ExpressionToPrint;
 nonterminal DesignatorStmt, OptDesignatorStatementExtension, ConditionDecl, IfConditionForm;
 nonterminal CondTerm, CondFact, SignTerm;
-nonterminal ActualPars, ActualParamList, OptDesignatorPart, FieldOption;
+nonterminal ActualPars, ActualParamList, OptDesignatorPart, EnumOption;
 nonterminal AssignOp, RelOp, Addop, MulOp;
 
 nonterminal Program, Designator, MethodDecl;
@@ -133,11 +133,21 @@ MiddleVarDecl ::= (MiddleVarDeclaration) VarDecl COMMA
 
 VarDecl ::= (VarDeclaration) IDENT:varName ArrOpt;
 
+OptVar ::= (OptVarsList) VarDeclExpressionList
+            |
+            (NoOptVarsList)
+            ;
+
+VarDeclExpressionList ::= (OptVarDeclExpressionList) VarDeclExpressionList VarDeclExpression
+                          |
+                          (SingleOptVarDecl) VarDeclExpression
+                          ;
+
 ArrOpt ::= (ArrayOption) LSQBRACE RSQBRACE
             |
             (NoArrayOption);
 
-EnumDecl ::= (EnumDeclaration) ENUM IDENT:eName LBRACE EnumList RBRACE SEMI;
+EnumDecl ::= (EnumDeclaration) ENUM IDENT:eName LBRACE EnumList RBRACE;
 
 EnumList ::= (EnumMembersList) EnumList COMMA EnumMember
             | (SingleEnumMember) EnumMember
@@ -197,7 +207,7 @@ Statement ::= (DesignatorStatement) DesignatorStmt SEMI
 			  |
 			  (ReturnNopStatement) RETURN SEMI
 			  |
-			  (StatementBlock) LBRACE Statement RBRACE
+			  (StatementBlock) LBRACE Statements RBRACE
 			  ;
 
 OptDesignatorStatement ::= (SingleDesignatorStatement) DesignatorStmt
@@ -287,12 +297,12 @@ ActualParamList ::= (ParametarsList) ActualParamList COMMA Expr
 
 Designator ::= (Designator) IDENT:dest OptDesignatorPart;
 
-OptDesignatorPart ::= (OptionalFieldDesignatorPart) FieldOption
+OptDesignatorPart ::= (OptionalEnumDesignatorPart) EnumOption
                     | (OptionalArrayDesignatorPart) ArrWithExpr
                     | (NoOptionalPart)
                     ;
 
-FieldOption ::= (Field) DOT IDENT:desField;
+EnumOption ::= (Field) DOT IDENT:desField;
 
 ArrWithExpr ::= (ArrayWithExpr) LSQBRACE Expr:arrExp RSQBRACE;
 
