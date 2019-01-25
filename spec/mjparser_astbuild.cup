@@ -72,8 +72,6 @@ nonterminal ConstDecl ConstDecl;
 nonterminal ConstKind ConstKind;
 nonterminal VarDeclExpression VarDeclExpression;
 nonterminal VarsList VarsList;
-nonterminal VarDecl VarDecl;
-nonterminal Variables Variables;
 nonterminal LastVarDecl LastVarDecl;
 nonterminal MiddleVarDecl MiddleVarDecl;
 nonterminal OptVar OptVar;
@@ -150,29 +148,6 @@ ConstKind ::= (ConstNumber) NUMBER:numValue {: RESULT=new ConstNumber(numValue);
             (ConstBool) BOOL_CONST:boolValue {: RESULT=new ConstBool(boolValue); RESULT.setLine(boolValueleft); :}
             ;
 
-VarDeclExpression ::= (VarDeclarationExpression) Type:varType Variables:V1 {: RESULT=new VarDeclarationExpression(varType, V1); RESULT.setLine(varTypeleft); :};
-
-Variables ::= (Variables) VarsList:V1 LastVarDecl:L2 {: RESULT=new Variables(V1, L2); RESULT.setLine(V1left); :};
-
-VarsList ::= (VariablesList) VarsList:V1 MiddleVarDecl:M2 {: RESULT=new VariablesList(V1, M2); RESULT.setLine(V1left); :}
-             |
-             (NoVarsDeclaration) {: RESULT=new NoVarsDeclaration(); :}
-             ;
-
-LastVarDecl ::= (LastVarDeclaration) VarDecl:V1 SEMI {: RESULT=new LastVarDeclaration(V1); RESULT.setLine(V1left); :}
-                |
-                error SEMI
-                {: parser.report_error("Bad variable declaration ", null); :} {: RESULT=new LastVarDeclDerived1(); :}
-                ;
-
-MiddleVarDecl ::= (MiddleVarDeclaration) VarDecl:V1 COMMA {: RESULT=new MiddleVarDeclaration(V1); RESULT.setLine(V1left); :}
-                   |
-                   error COMMA:l
-                   {: parser.report_error("Bad variable declaration ", null); :} {: RESULT=new MiddleVarDeclDerived1(); :}
-                   ;
-
-VarDecl ::= (VarDeclaration) IDENT:varName ArrOpt:A1 {: RESULT=new VarDeclaration(varName, A1); RESULT.setLine(varNameleft); :};
-
 OptVar ::= (OptVarsList) VarDeclExpressionList:V1 {: RESULT=new OptVarsList(V1); RESULT.setLine(V1left); :}
             |
             (NoOptVarsList) {: RESULT=new NoOptVarsList(); :}
@@ -183,9 +158,33 @@ VarDeclExpressionList ::= (OptVarDeclExpressionList) VarDeclExpressionList:V1 Va
                           (SingleOptVarDecl) VarDeclExpression:V1 {: RESULT=new SingleOptVarDecl(V1); RESULT.setLine(V1left); :}
                           ;
 
+//vratiti VarsList
+VarDeclExpression ::= (VarDeclarationExpression) Type:varType LastVarDecl:L1 {: RESULT=new VarDeclarationExpression(varType, L1); RESULT.setLine(varTypeleft); :};
+
+VarsList ::= (VariablesList) VarsList:V1 MiddleVarDecl:M2 {: RESULT=new VariablesList(V1, M2); RESULT.setLine(V1left); :}
+             |
+             (NoVarsDeclaration) {: RESULT=new NoVarsDeclaration(); :}
+//             |
+//             (ErrorFirstVar) VarsList error COMMA:l
+//                {: parser.report_error("Bad variable declaration before , at line " + lleft, null); :}
+             ;
+
+LastVarDecl ::=(LastVarDeclaration) IDENT:varName ArrOpt:A1 SEMI {: RESULT=new LastVarDeclaration(varName, A1); RESULT.setLine(varNameleft); :}
+               |
+               (ErrorLastVar) error SEMI:l
+                {: parser.report_error("Bad variable declaration before ; at line " + lleft, null); :} {: RESULT=new ErrorLastVar(); :}
+                ;
+
+MiddleVarDecl ::= (MiddleVarDeclaration) IDENT:varName ArrOpt:A1 COMMA {: RESULT=new MiddleVarDeclaration(varName, A1); RESULT.setLine(varNameleft); :}
+                   |
+                   (ErrorMidVar) error COMMA:l
+                   {: parser.report_error("Bad variable declaration before , at line " + lleft, null); :} {: RESULT=new ErrorMidVar(); :}
+                   ;
+
 ArrOpt ::= (ArrayOption) LSQBRACE RSQBRACE {: RESULT=new ArrayOption(); :}
             |
             (NoArrayOption) {: RESULT=new NoArrayOption(); :};
+
 
 EnumDecl ::= (EnumDeclaration) ENUM IDENT:eName LBRACE EnumList:E1 RBRACE {: RESULT=new EnumDeclaration(eName, E1); RESULT.setLine(eNameleft); :};
 
@@ -226,9 +225,9 @@ Statements ::= (StatementList) Statements:S1 Statement:S2 {: RESULT=new Statemen
 
 Statement ::= (DesignatorStatement) DesignatorStmt:D1 SEMI {: RESULT=new DesignatorStatement(D1); RESULT.setLine(D1left); :}
 			  |
-			  Designator:D1 AssignOp:A2 error SEMI:l
-              {: parser.report_error("Bad assignment statement ", null); :} {: RESULT=new StatementDerived1(D1, A2); RESULT.setLine(D1left); :}
-			  |
+              Designator:D1 AssignOp:A2 error SEMI:l
+              {: parser.report_error("Bad assignment statement until ; on line " + lleft, null); :} {: RESULT=new StatementDerived1(D1, A2); RESULT.setLine(D1left); :}
+              |
 			  (IfStatement) IF IfConditionForm:I1 Statement:S2 {: RESULT=new IfStatement(I1, S2); RESULT.setLine(I1left); :}
 			  |
 			  (IfElseStatement) IF IfConditionForm:I1 Statement:S2 ELSE Statement:S3 {: RESULT=new IfElseStatement(I1, S2, S3); RESULT.setLine(I1left); :}
@@ -257,8 +256,8 @@ OptDesignatorStatement ::= (SingleDesignatorStatement) DesignatorStmt:D1 {: RESU
 
 IfConditionForm ::= (IfCondition) LPAREN ConditionDecl:C1 RPAREN {: RESULT=new IfCondition(C1); RESULT.setLine(C1left); :}
                     |
-                    LPAREN error RPAREN:l
-                    {: parser.report_error("Bad condition ", null); :} {: RESULT=new IfConditionFormDerived1(); :}
+                    (ConditionError) LPAREN error RPAREN:l
+                    {: parser.report_error("Bad condition at line " + lleft, null); :} {: RESULT=new ConditionError(); :}
                     ;
 
 OptCondition::= (Condition) ConditionDecl:C1 {: RESULT=new Condition(C1); RESULT.setLine(C1left); :}
@@ -274,15 +273,15 @@ ExpressionToPrint ::= (ExpressionToPrintList) ExpressionToPrint:E1 COMMA NUMBER:
 
 DesignatorStmt ::= (DesignatorStatementDef) Designator:dest OptDesignatorStatementExtension:O1 {: RESULT=new DesignatorStatementDef(dest, O1); RESULT.setLine(destleft); :};
 
-OptDesignatorStatementExtension ::= (AssignExtension) AssignOp:A1 Expr:expValue {: RESULT=new AssignExtension(A1, expValue); RESULT.setLine(A1left); :}
+OptDesignatorStatementExtension ::= (AssignExtension) AssignOp:A1 Expr:expValue SEMI {: RESULT=new AssignExtension(A1, expValue); RESULT.setLine(A1left); :}
                                     |
-                                    (ParametarsExtension) LPAREN ActualPars:A1 RPAREN {: RESULT=new ParametarsExtension(A1); RESULT.setLine(A1left); :}
+                                    (ParametarsExtension) LPAREN ActualPars:A1 RPAREN SEMI {: RESULT=new ParametarsExtension(A1); RESULT.setLine(A1left); :}
                                     |
-                                    (IncExtension) INC {: RESULT=new IncExtension(); :}
+                                    (IncExtension) INC SEMI {: RESULT=new IncExtension(); :}
                                     |
-                                    (DecExtension) DEC {: RESULT=new DecExtension(); :}
+                                    (DecExtension) DEC SEMI {: RESULT=new DecExtension(); :}
                                     |
-                                    (NoExtension) {: RESULT=new NoExtension(); :}
+                                    (NoExtension) SEMI {: RESULT=new NoExtension(); :}
                                     ;
 
 ConditionDecl ::= (TermListCondition) ConditionDecl:C1 OR CondTerm:C2 {: RESULT=new TermListCondition(C1, C2); RESULT.setLine(C1left); :}
@@ -358,3 +357,5 @@ RelOp ::= (Equal) EQUAL {: RESULT=new Equal(); :}
 Addop ::= (PlusOp) PLUS {: RESULT=new PlusOp(); :} | (MinusOp) MINUS {: RESULT=new MinusOp(); :};
 
 MulOp ::= (MulOp) MUL {: RESULT=new MulOp(); :} | (DivOp) DIV {: RESULT=new DivOp(); :} | (ModOp) MOD {: RESULT=new ModOp(); :};
+
+

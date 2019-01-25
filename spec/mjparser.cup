@@ -65,7 +65,7 @@ terminal Integer NUMBER;
 terminal Boolean BOOL_CONST;
 
 nonterminal AllDeclList, DeclType, ConstDeclExpression, ConstDeclList, ConstDecl, ConstKind;
-nonterminal VarDeclExpression, VarsList, VarDecl, Variables, LastVarDecl, MiddleVarDecl, OptVar, ArrOpt, ArrWithExpr;
+nonterminal VarDeclExpression, VarsList, LastVarDecl, MiddleVarDecl, OptVar, ArrOpt, ArrWithExpr;
 nonterminal EnumDecl, EnumList, EnumMember, EnumInit, VarDeclExpressionList;
 nonterminal RetType, FormParams, FormPara, MethodDeclList;
 nonterminal Statements, Statement, OptDesignatorStatement, OptCondition, ExpressionToPrint;
@@ -110,29 +110,6 @@ ConstKind ::= (ConstNumber) NUMBER:numValue
             (ConstBool) BOOL_CONST:boolValue
             ;
 
-VarDeclExpression ::= (VarDeclarationExpression) Type:varType Variables;
-
-Variables ::= (Variables) VarsList LastVarDecl;
-
-VarsList ::= (VariablesList) VarsList MiddleVarDecl
-             |
-             (NoVarsDeclaration)
-             ;
-
-LastVarDecl ::= (LastVarDeclaration) VarDecl SEMI
-                |
-                error SEMI
-                {: parser.report_error("Bad variable declaration ", null); :}
-                ;
-
-MiddleVarDecl ::= (MiddleVarDeclaration) VarDecl COMMA
-                   |
-                   error COMMA:l
-                   {: parser.report_error("Bad variable declaration ", null); :}
-                   ;
-
-VarDecl ::= (VarDeclaration) IDENT:varName ArrOpt;
-
 OptVar ::= (OptVarsList) VarDeclExpressionList
             |
             (NoOptVarsList)
@@ -143,9 +120,33 @@ VarDeclExpressionList ::= (OptVarDeclExpressionList) VarDeclExpressionList VarDe
                           (SingleOptVarDecl) VarDeclExpression
                           ;
 
+//vratiti VarsList
+VarDeclExpression ::= (VarDeclarationExpression) Type:varType LastVarDecl;
+
+VarsList ::= (VariablesList) VarsList MiddleVarDecl
+             |
+             (NoVarsDeclaration)
+//             |
+//             (ErrorFirstVar) VarsList error COMMA:l
+//                {: parser.report_error("Bad variable declaration before , at line " + lleft, null); :}
+             ;
+
+LastVarDecl ::=(LastVarDeclaration) IDENT:varName ArrOpt SEMI
+               |
+               (ErrorLastVar) error SEMI:l
+                {: parser.report_error("Bad variable declaration before ; at line " + lleft, null); :}
+                ;
+
+MiddleVarDecl ::= (MiddleVarDeclaration) IDENT:varName ArrOpt COMMA
+                   |
+                   (ErrorMidVar) error COMMA:l
+                   {: parser.report_error("Bad variable declaration before , at line " + lleft, null); :}
+                   ;
+
 ArrOpt ::= (ArrayOption) LSQBRACE RSQBRACE
             |
             (NoArrayOption);
+
 
 EnumDecl ::= (EnumDeclaration) ENUM IDENT:eName LBRACE EnumList RBRACE;
 
@@ -186,9 +187,9 @@ Statements ::= (StatementList) Statements Statement
 
 Statement ::= (DesignatorStatement) DesignatorStmt SEMI
 			  |
-			  Designator AssignOp error SEMI:l
-              {: parser.report_error("Bad assignment statement ", null); :}
-			  |
+              Designator AssignOp error SEMI:l
+              {: parser.report_error("Bad assignment statement until ; on line " + lleft, null); :}
+              |
 			  (IfStatement) IF IfConditionForm Statement
 			  |
 			  (IfElseStatement) IF IfConditionForm Statement ELSE Statement
@@ -217,8 +218,8 @@ OptDesignatorStatement ::= (SingleDesignatorStatement) DesignatorStmt
 
 IfConditionForm ::= (IfCondition) LPAREN ConditionDecl RPAREN
                     |
-                    LPAREN error RPAREN:l
-                    {: parser.report_error("Bad condition ", null); :}
+                    (ConditionError) LPAREN error RPAREN:l
+                    {: parser.report_error("Bad condition at line " + lleft, null); :}
                     ;
 
 OptCondition::= (Condition) ConditionDecl
@@ -234,15 +235,15 @@ ExpressionToPrint ::= (ExpressionToPrintList) ExpressionToPrint COMMA NUMBER:val
 
 DesignatorStmt ::= (DesignatorStatementDef) Designator:dest OptDesignatorStatementExtension;
 
-OptDesignatorStatementExtension ::= (AssignExtension) AssignOp Expr:expValue
+OptDesignatorStatementExtension ::= (AssignExtension) AssignOp Expr:expValue SEMI
                                     |
-                                    (ParametarsExtension) LPAREN ActualPars RPAREN
+                                    (ParametarsExtension) LPAREN ActualPars RPAREN SEMI
                                     |
-                                    (IncExtension) INC
+                                    (IncExtension) INC SEMI
                                     |
-                                    (DecExtension) DEC
+                                    (DecExtension) DEC SEMI
                                     |
-                                    (NoExtension)
+                                    (NoExtension) SEMI
                                     ;
 
 ConditionDecl ::= (TermListCondition) ConditionDecl OR CondTerm
@@ -318,3 +319,5 @@ RelOp ::= (Equal) EQUAL
 Addop ::= (PlusOp) PLUS | (MinusOp) MINUS;
 
 MulOp ::= (MulOp) MUL | (DivOp) DIV | (ModOp) MOD;
+
+
