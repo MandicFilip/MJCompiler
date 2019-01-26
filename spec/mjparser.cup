@@ -64,8 +64,8 @@ terminal Character CHARCONST;
 terminal Integer NUMBER;
 terminal Boolean BOOL_CONST;
 
-nonterminal AllDeclList, DeclType, ConstDeclExpression, ConstDeclList, ConstDecl, ConstKind;
-nonterminal VarDeclExpression, VarsList, LastVarDecl, MiddleVarDecl, OptVar, ArrOpt, ArrWithExpr;
+nonterminal AllDeclList, DeclType, ConstDeclExpression, ConstDeclList, ConstDeclaration, ConstKind;
+nonterminal VarDeclExpression, VarsList, VarDecl, OptVars, ArrOpt, ArrWithExpr;
 nonterminal EnumDecl, EnumList, EnumMember, EnumInit, VarDeclExpressionList;
 nonterminal RetType, FormParams, FormPara, MethodDeclList;
 nonterminal Statements, Statement, OptDesignatorStatement, OptCondition, ExpressionToPrint;
@@ -74,12 +74,17 @@ nonterminal CondTerm, CondFact, SignTerm;
 nonterminal ActualPars, ActualParamList, OptDesignatorPart, EnumOption;
 nonterminal AssignOp, RelOp, Addop, MulOp;
 
-nonterminal Program, Designator, MethodDecl;
-nonterminal Type, Term, Expr, Factor;
+nonterminal Designator, MethodDecl;
+nonterminal Term, Expr, Factor;
+
+nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName;
+nonterminal rs.etf pp1.symboltable.concepts.Struct Type;
 
 precedence left ELSE;
 
-Program ::= (Program) PROGRAM IDENT:pName AllDeclList LBRACE MethodDeclList RBRACE;
+Program ::= (Program) PROGRAM ProgName AllDeclList LBRACE MethodDeclList RBRACE;
+
+ProgName ::= (ProgName) IDENT:pName;
 
 AllDeclList ::= (ALLDeclarationsList) AllDeclList DeclType
               | (NoDeclaration)
@@ -101,7 +106,7 @@ ConstDeclList ::= (ConstDeclarationList) ConstDeclList COMMA ConstDecl
                   (SingleConstDeclaration) ConstDecl
                   ;
 
-ConstDecl ::= (ConstDeclaration) IDENT:constName ASSIGNMENT ConstKind:constValue;
+ConstDeclaration ::= (ConstDeclaration) IDENT:constName ASSIGNMENT ConstKind:constValue;
 
 ConstKind ::= (ConstNumber) NUMBER:numValue
             |
@@ -110,7 +115,7 @@ ConstKind ::= (ConstNumber) NUMBER:numValue
             (ConstBool) BOOL_CONST:boolValue
             ;
 
-OptVar ::= (OptVarsList) VarDeclExpressionList
+OptVars ::= (OptVarsList) VarDeclExpressionList
             |
             (NoOptVarsList)
             ;
@@ -120,28 +125,18 @@ VarDeclExpressionList ::= (OptVarDeclExpressionList) VarDeclExpressionList VarDe
                           (SingleOptVarDecl) VarDeclExpression
                           ;
 
-//vratiti VarsList
-VarDeclExpression ::= (VarDeclarationExpression) Type:varType LastVarDecl;
+VarDeclExpression ::= (VarDeclarationExpression) Type:varType VarsList SEMI;
 
-VarsList ::= (VariablesList) VarsList MiddleVarDecl
+VarsList ::= (VariablesList) VarsList COMMA VarDecl
              |
-             (NoVarsDeclaration)
-//             |
-//             (ErrorFirstVar) VarsList error COMMA:l
-//                {: parser.report_error("Bad variable declaration before , at line " + lleft, null); :}
+             (SigleVarDecl) VarDecl
              ;
 
-LastVarDecl ::=(LastVarDeclaration) IDENT:varName ArrOpt SEMI
+VarDecl ::=(VarDeclaration) IDENT:varName ArrOpt
                |
-               (ErrorLastVar) error SEMI:l
-                {: parser.report_error("Bad variable declaration before ; at line " + lleft, null); :}
+               (ErrorVarDecl) error
+                {: parser.report_error("Bad variable declaration! ", null); :}
                 ;
-
-MiddleVarDecl ::= (MiddleVarDeclaration) IDENT:varName ArrOpt COMMA
-                   |
-                   (ErrorMidVar) error COMMA:l
-                   {: parser.report_error("Bad variable declaration before , at line " + lleft, null); :}
-                   ;
 
 ArrOpt ::= (ArrayOption) LSQBRACE RSQBRACE
             |
@@ -178,7 +173,7 @@ MethodDeclList ::= (MethodDeclarationList) MethodDeclList MethodDecl
 					(NoMethodDecl)/* epsilon */
 					;
 
-MethodDecl ::= (MethodDecl) RetType IDENT:methodName LPAREN FormParams RPAREN OptVar LBRACE Statements RBRACE;
+MethodDecl ::= (MethodDecl) RetType IDENT:methodName LPAREN FormParams RPAREN OptVars LBRACE Statements RBRACE;
 
 Statements ::= (StatementList) Statements Statement
                   |

@@ -68,13 +68,12 @@ nonterminal AllDeclList AllDeclList;
 nonterminal DeclType DeclType;
 nonterminal ConstDeclExpression ConstDeclExpression;
 nonterminal ConstDeclList ConstDeclList;
-nonterminal ConstDecl ConstDecl;
+nonterminal ConstDeclaration ConstDeclaration;
 nonterminal ConstKind ConstKind;
 nonterminal VarDeclExpression VarDeclExpression;
 nonterminal VarsList VarsList;
-nonterminal LastVarDecl LastVarDecl;
-nonterminal MiddleVarDecl MiddleVarDecl;
-nonterminal OptVar OptVar;
+nonterminal VarDecl VarDecl;
+nonterminal OptVars OptVars;
 nonterminal ArrOpt ArrOpt;
 nonterminal ArrWithExpr ArrWithExpr;
 nonterminal EnumDecl EnumDecl;
@@ -107,7 +106,6 @@ nonterminal RelOp RelOp;
 nonterminal Addop Addop;
 nonterminal MulOp MulOp;
 
-nonterminal Program Program;
 nonterminal Designator Designator;
 nonterminal MethodDecl MethodDecl;
 nonterminal Type Type;
@@ -115,9 +113,14 @@ nonterminal Term Term;
 nonterminal Expr Expr;
 nonterminal Factor Factor;
 
+nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName;
+nonterminal rs.etf pp1.symboltable.concepts.Struct Type;
+
 precedence left ELSE;
 
-Program ::= (Program) PROGRAM IDENT:pName AllDeclList:A1 LBRACE MethodDeclList:M2 RBRACE {: RESULT=new Program(pName, A1, M2); RESULT.setLine(pNameleft); :};
+Program ::= (Program) PROGRAM ProgName:P1 AllDeclList:A2 LBRACE MethodDeclList:M3 RBRACE {: RESULT=new Program(P1, A2, M3); RESULT.setLine(P1left); :};
+
+ProgName ::= (ProgName) IDENT:pName {: RESULT=new ProgName(pName); RESULT.setLine(pNameleft); :};
 
 AllDeclList ::= (ALLDeclarationsList) AllDeclList:A1 DeclType:D2 {: RESULT=new ALLDeclarationsList(A1, D2); RESULT.setLine(A1left); :}
               | (NoDeclaration) {: RESULT=new NoDeclaration(); :}
@@ -134,12 +137,12 @@ Type ::= (Type) IDENT:tName {: RESULT=new Type(tName); RESULT.setLine(tNameleft)
 
 ConstDeclExpression ::= (ConstDeclarationExpression) CONST Type:constType ConstDeclList:C1 SEMI {: RESULT=new ConstDeclarationExpression(constType, C1); RESULT.setLine(constTypeleft); :};
 
-ConstDeclList ::= (ConstDeclarationList) ConstDeclList:C1 COMMA ConstDecl:C2 {: RESULT=new ConstDeclarationList(C1, C2); RESULT.setLine(C1left); :}
+ConstDeclList ::= (ConstDeclarationList) ConstDeclList:C1 COMMA ConstDecl {: RESULT=new ConstDeclarationList(C1); RESULT.setLine(C1left); :}
                   |
-                  (SingleConstDeclaration) ConstDecl:C1 {: RESULT=new SingleConstDeclaration(C1); RESULT.setLine(C1left); :}
+                  (SingleConstDeclaration) ConstDecl {: RESULT=new SingleConstDeclaration(); :}
                   ;
 
-ConstDecl ::= (ConstDeclaration) IDENT:constName ASSIGNMENT ConstKind:constValue {: RESULT=new ConstDeclaration(constName, constValue); RESULT.setLine(constNameleft); :};
+ConstDeclaration ::= (ConstDeclaration) IDENT:constName ASSIGNMENT ConstKind:constValue {: RESULT=new ConstDeclaration(constName, constValue); RESULT.setLine(constNameleft); :};
 
 ConstKind ::= (ConstNumber) NUMBER:numValue {: RESULT=new ConstNumber(numValue); RESULT.setLine(numValueleft); :}
             |
@@ -148,7 +151,7 @@ ConstKind ::= (ConstNumber) NUMBER:numValue {: RESULT=new ConstNumber(numValue);
             (ConstBool) BOOL_CONST:boolValue {: RESULT=new ConstBool(boolValue); RESULT.setLine(boolValueleft); :}
             ;
 
-OptVar ::= (OptVarsList) VarDeclExpressionList:V1 {: RESULT=new OptVarsList(V1); RESULT.setLine(V1left); :}
+OptVars ::= (OptVarsList) VarDeclExpressionList:V1 {: RESULT=new OptVarsList(V1); RESULT.setLine(V1left); :}
             |
             (NoOptVarsList) {: RESULT=new NoOptVarsList(); :}
             ;
@@ -158,28 +161,18 @@ VarDeclExpressionList ::= (OptVarDeclExpressionList) VarDeclExpressionList:V1 Va
                           (SingleOptVarDecl) VarDeclExpression:V1 {: RESULT=new SingleOptVarDecl(V1); RESULT.setLine(V1left); :}
                           ;
 
-//vratiti VarsList
-VarDeclExpression ::= (VarDeclarationExpression) Type:varType LastVarDecl:L1 {: RESULT=new VarDeclarationExpression(varType, L1); RESULT.setLine(varTypeleft); :};
+VarDeclExpression ::= (VarDeclarationExpression) Type:varType VarsList:V1 SEMI {: RESULT=new VarDeclarationExpression(varType, V1); RESULT.setLine(varTypeleft); :};
 
-VarsList ::= (VariablesList) VarsList:V1 MiddleVarDecl:M2 {: RESULT=new VariablesList(V1, M2); RESULT.setLine(V1left); :}
+VarsList ::= (VariablesList) VarsList:V1 COMMA VarDecl:V2 {: RESULT=new VariablesList(V1, V2); RESULT.setLine(V1left); :}
              |
-             (NoVarsDeclaration) {: RESULT=new NoVarsDeclaration(); :}
-//             |
-//             (ErrorFirstVar) VarsList error COMMA:l
-//                {: parser.report_error("Bad variable declaration before , at line " + lleft, null); :}
+             (SigleVarDecl) VarDecl:V1 {: RESULT=new SigleVarDecl(V1); RESULT.setLine(V1left); :}
              ;
 
-LastVarDecl ::=(LastVarDeclaration) IDENT:varName ArrOpt:A1 SEMI {: RESULT=new LastVarDeclaration(varName, A1); RESULT.setLine(varNameleft); :}
+VarDecl ::=(VarDeclaration) IDENT:varName ArrOpt:A1 {: RESULT=new VarDeclaration(varName, A1); RESULT.setLine(varNameleft); :}
                |
-               (ErrorLastVar) error SEMI:l
-                {: parser.report_error("Bad variable declaration before ; at line " + lleft, null); :} {: RESULT=new ErrorLastVar(); :}
+               (ErrorVarDecl) error
+                {: parser.report_error("Bad variable declaration! ", null); :} {: RESULT=new ErrorVarDecl(); :}
                 ;
-
-MiddleVarDecl ::= (MiddleVarDeclaration) IDENT:varName ArrOpt:A1 COMMA {: RESULT=new MiddleVarDeclaration(varName, A1); RESULT.setLine(varNameleft); :}
-                   |
-                   (ErrorMidVar) error COMMA:l
-                   {: parser.report_error("Bad variable declaration before , at line " + lleft, null); :} {: RESULT=new ErrorMidVar(); :}
-                   ;
 
 ArrOpt ::= (ArrayOption) LSQBRACE RSQBRACE {: RESULT=new ArrayOption(); :}
             |
@@ -216,7 +209,7 @@ MethodDeclList ::= (MethodDeclarationList) MethodDeclList:M1 MethodDecl:M2 {: RE
 					(NoMethodDecl) {: RESULT=new NoMethodDecl(); :}/* epsilon */
 					;
 
-MethodDecl ::= (MethodDecl) RetType:R1 IDENT:methodName LPAREN FormParams:F2 RPAREN OptVar:O3 LBRACE Statements:S4 RBRACE {: RESULT=new MethodDecl(R1, methodName, F2, O3, S4); RESULT.setLine(R1left); :};
+MethodDecl ::= (MethodDecl) RetType:R1 IDENT:methodName LPAREN FormParams:F2 RPAREN OptVars:O3 LBRACE Statements:S4 RBRACE {: RESULT=new MethodDecl(R1, methodName, F2, O3, S4); RESULT.setLine(R1left); :};
 
 Statements ::= (StatementList) Statements:S1 Statement:S2 {: RESULT=new StatementList(S1, S2); RESULT.setLine(S1left); :}
                   |

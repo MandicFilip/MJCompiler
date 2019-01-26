@@ -5,6 +5,8 @@
         <delete>
             <fileset dir="src/rs/ac/bg/etf/pp1">
                 <exclude name="util/Log4JUtils.java"/>
+                <exclude name="SemanticPass.java"/>
+                <exclude name="SymbolTable.java"/>
             </fileset>
         </delete>
         <delete>
@@ -47,6 +49,7 @@
                 <pathelement path="lib/JFlex.jar" />
                 <pathelement path="lib/cup_v10k.jar" />
                 <pathelement path="lib/log4j-1.2.17.jar" />
+                <pathelement path="lib/simboltable.jar"/>
             </classpath>
         </javac>
     </target>
