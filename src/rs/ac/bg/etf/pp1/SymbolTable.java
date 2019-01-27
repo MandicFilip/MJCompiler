@@ -10,10 +10,12 @@ import rs.etf.pp1.symboltable.visitors.SymbolTableVisitor;
 import static rs.etf.pp1.symboltable.Tab.currentScope;
 import static rs.etf.pp1.symboltable.Tab.noType;
 
-public class SymbolTable {
+public class SymbolTable extends Tab{
     public static final int BOOLEAN_TYPE = 5;
+    public static final int ENUM_TYPE = 5;
 
-    public static final Struct boolType = new Struct(5);
+    public static final Struct boolType = new Struct(BOOLEAN_TYPE);
+    public static final Struct enumType = new Struct(ENUM_TYPE);
     public static Obj printObj;
 
     public static void init() {

@@ -4,22 +4,26 @@ import rs.ac.bg.etf.pp1.ast.*;
 import rs.etf.pp1.symboltable.*;
 import rs.etf.pp1.symboltable.concepts.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 //SymbolTable class extends Tab and wraps its methods
 //Use SymbolTable for methods and Boolean Const
-public class SemanticPass extends VisitorAdaptor {
+public class SemanticAnalyzer extends VisitorAdaptor {
 
-    private static Obj currentTypeObj = Tab.noObj;
-    private static Obj currentMethod = Tab.noObj;
+    private static Obj currentTypeObj = SymbolTable.noObj;
+    private static Obj currentMethod = SymbolTable.noObj;
 
+    private List<Integer> enumValues = new ArrayList<>();
     private static int nextEnumValue = 0;
-    private static Obj currentEnum = Tab.noObj;
+    private static Obj currentEnum = SymbolTable.noObj;
 
     private static boolean hasReturnExpr = false;
     private static boolean isMainDefined = false;
 
     private boolean isSymbolDefined(String typeName) {
         Obj foundObj = SymbolTable.find(typeName);
-        return foundObj != Tab.noObj;
+        return foundObj != SymbolTable.noObj;
     }
 
     private boolean isDefinedInCurrentScope(String name) {
@@ -27,17 +31,25 @@ public class SemanticPass extends VisitorAdaptor {
     }
 
     private boolean isMethodAndVarWithSameName(String varName) {
-        if (currentMethod == Tab.noObj) return false;
+        if (currentMethod == SymbolTable.noObj) return false;
         return currentMethod.getName().equals(varName);
     }
 
     private boolean isEnumAndVarWithSameName(String varName) {
-        if (currentEnum == Tab.noObj) return false;
+        if (currentEnum == SymbolTable.noObj) return false;
         return currentEnum.getName().equals(varName);
     }
 
+    private boolean checkIfEnumValueIsUnique(int value) {
+        for (int i = 0; i < enumValues.size(); i++) {
+            if (value == enumValues.get(i)) return false;
+        }
+        return true;
+    }
+
+
     private boolean isMainCorrect() {
-        return currentMethod.getLevel() == 0 && currentMethod.getType() == Tab.noType;
+        return currentMethod.getLevel() == 0 && currentMethod.getType() == SymbolTable.noType;
     }
 
     //--------------------VISIT METHODS----------------------------------------
@@ -50,7 +62,7 @@ public class SemanticPass extends VisitorAdaptor {
     }
 
     public void visit(ProgName progName) {
-        progName.obj = Tab.insert(Obj.Prog, progName.getPName(), Tab.noType);
+        progName.obj = SymbolTable.insert(Obj.Prog, progName.getPName(), SymbolTable.noType);
         SymbolTable.openScope();
     }
 
@@ -69,21 +81,21 @@ public class SemanticPass extends VisitorAdaptor {
         } else {
             //TODO report error - no type in symbol table
 
-            currentTypeObj = Tab.noObj;
+            currentTypeObj = SymbolTable.noObj;
         }
     }
 
     //----------------------CONST----------------------------------------------
 
     public void visit(ConstDecl constDecl) {
-        if (currentTypeObj == Tab.noObj) {
+        if (currentTypeObj == SymbolTable.noObj) {
             //TODO error in type already reported
             return;
         }
 
         String constName = constDecl.getConstName();
         Obj constObj = SymbolTable.find(constName);
-        if (constObj == Tab.noObj) {
+        if (constObj == SymbolTable.noObj) {
             //TODO error symbol with that name already exists
             return;
         }
@@ -91,14 +103,14 @@ public class SemanticPass extends VisitorAdaptor {
         ConstKind constKind = constDecl.getConstKind();
 
         int constValue = 0;
-        Struct rightSide = Tab.noType;
+        Struct rightSide = SymbolTable.noType;
 
         if (constKind instanceof ConstNumber) {
-            rightSide = Tab.intType;
+            rightSide = SymbolTable.intType;
             constValue = ((ConstNumber) constKind).getNumValue();
 
         } else if (constKind instanceof ConstChar) {
-            rightSide = Tab.charType;
+            rightSide = SymbolTable.charType;
             constValue = ((ConstChar) constKind).getCharValue();
 
         } if (constKind instanceof ConstBool) {
@@ -122,7 +134,7 @@ public class SemanticPass extends VisitorAdaptor {
 
     public void visit(VarDecl varDecl) {
 
-        if (currentTypeObj == Tab.noObj) {
+        if (currentTypeObj == SymbolTable.noObj) {
             //TODO report error type unknown - already reported in type
             return;
         }
@@ -154,16 +166,15 @@ public class SemanticPass extends VisitorAdaptor {
     public void visit(EnumDecl enumDecl) {
         SymbolTable.chainLocalSymbols(enumDecl.getEnumStart().obj);
         SymbolTable.closeScope();
-        nextEnumValue = 0;
     }
 
     public void visit(EnumStart enumStart) {
-        SymbolTable.insert(Obj.Type, enumStart.getEName(), Tab.intType); //TODO enum type
+        SymbolTable.insert(Obj.Type, enumStart.getEName(), SymbolTable.enumType);
         SymbolTable.openScope();
         nextEnumValue = 0;
+        enumValues.clear();
     }
 
-    //paziti na enum{1, 2, 3, 2, 4, 5} !
     public void visit(EnumMember enumMember) {
         String enumName = enumMember.getEnumMemberName();
         if (isDefinedInCurrentScope(enumName) || isEnumAndVarWithSameName(enumName)) {
@@ -178,14 +189,19 @@ public class SemanticPass extends VisitorAdaptor {
             nextEnumValue = value + 1;
         }
 
-        SymbolTable.insert(Obj.Con, enumName, Tab.intType);
+        if (checkIfEnumValueIsUnique(value)) {
+            Obj newEnum = SymbolTable.insert(Obj.Con, enumName, SymbolTable.intType);
+            newEnum.setAdr(value);
+        } else {
+            //TODO report error two same values in one enum
+        }
     }
 
     //--------------------METHODS----------------------------------------------
 
     public void visit(MethodDecl methodDecl) {
 
-        if (currentMethod == Tab.noObj) {
+        if (currentMethod == SymbolTable.noObj) {
             //TODO report error currentMethod not set
             return;
         }
@@ -197,12 +213,12 @@ public class SemanticPass extends VisitorAdaptor {
             //TODO report error main has wrong signature
         }
 
-        if (!hasReturnExpr && currentMethod.getType() != Tab.noType) {
+        if (!hasReturnExpr && currentMethod.getType() != SymbolTable.noType) {
             //TODO report error function which returns value has no return expr
             hasReturnExpr = false;
         }
 
-        currentMethod = Tab.noObj;
+        currentMethod = SymbolTable.noObj;
         SymbolTable.closeScope();
     }
 
@@ -218,7 +234,7 @@ public class SemanticPass extends VisitorAdaptor {
         Struct type;
 
         if (retType instanceof RetVoid) {
-            type = Tab.noType;
+            type = SymbolTable.noType;
         } else {
             type = currentTypeObj.getType();
         }
@@ -226,7 +242,7 @@ public class SemanticPass extends VisitorAdaptor {
         if (methodName.equals("main"))
             isMainDefined = true;
 
-        currentMethod = Tab.insert(Obj.Meth, methodName, type);
+        currentMethod = SymbolTable.insert(Obj.Meth, methodName, type);
         SymbolTable.openScope();
 
         currentMethod.setLevel(0); //set number of parameters to 0 before parameters list
@@ -240,7 +256,7 @@ public class SemanticPass extends VisitorAdaptor {
     public void visit(FormPara formPara) {
         String formParaName = formPara.getParamName();
 
-        if (currentTypeObj == Tab.noObj) {
+        if (currentTypeObj == SymbolTable.noObj) {
             //TODO report error type unknown - already reported in type
             return;
         }
