@@ -68,7 +68,7 @@ nonterminal AllDeclList AllDeclList;
 nonterminal DeclType DeclType;
 nonterminal ConstDeclExpression ConstDeclExpression;
 nonterminal ConstDeclList ConstDeclList;
-nonterminal ConstDeclaration ConstDeclaration;
+nonterminal ConstDecl ConstDecl;
 nonterminal ConstKind ConstKind;
 nonterminal VarDeclExpression VarDeclExpression;
 nonterminal VarsList VarsList;
@@ -113,8 +113,7 @@ nonterminal Term Term;
 nonterminal Expr Expr;
 nonterminal Factor Factor;
 
-nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName;
-nonterminal rs.etf pp1.symboltable.concepts.Struct Type;
+nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, EnumStart, MethodStart;
 
 precedence left ELSE;
 
@@ -137,12 +136,12 @@ Type ::= (Type) IDENT:tName {: RESULT=new Type(tName); RESULT.setLine(tNameleft)
 
 ConstDeclExpression ::= (ConstDeclarationExpression) CONST Type:constType ConstDeclList:C1 SEMI {: RESULT=new ConstDeclarationExpression(constType, C1); RESULT.setLine(constTypeleft); :};
 
-ConstDeclList ::= (ConstDeclarationList) ConstDeclList:C1 COMMA ConstDecl {: RESULT=new ConstDeclarationList(C1); RESULT.setLine(C1left); :}
+ConstDeclList ::= (ConstDeclarationList) ConstDeclList:C1 COMMA ConstDecl:C2 {: RESULT=new ConstDeclarationList(C1, C2); RESULT.setLine(C1left); :}
                   |
-                  (SingleConstDeclaration) ConstDecl {: RESULT=new SingleConstDeclaration(); :}
+                  (SingleConstDeclaration) ConstDecl:C1 {: RESULT=new SingleConstDeclaration(C1); RESULT.setLine(C1left); :}
                   ;
 
-ConstDeclaration ::= (ConstDeclaration) IDENT:constName ASSIGNMENT ConstKind:constValue {: RESULT=new ConstDeclaration(constName, constValue); RESULT.setLine(constNameleft); :};
+ConstDecl ::= (ConstDecl) IDENT:constName ASSIGNMENT ConstKind:constValue {: RESULT=new ConstDecl(constName, constValue); RESULT.setLine(constNameleft); :};
 
 ConstKind ::= (ConstNumber) NUMBER:numValue {: RESULT=new ConstNumber(numValue); RESULT.setLine(numValueleft); :}
             |
@@ -168,18 +167,21 @@ VarsList ::= (VariablesList) VarsList:V1 COMMA VarDecl:V2 {: RESULT=new Variable
              (SigleVarDecl) VarDecl:V1 {: RESULT=new SigleVarDecl(V1); RESULT.setLine(V1left); :}
              ;
 
-VarDecl ::=(VarDeclaration) IDENT:varName ArrOpt:A1 {: RESULT=new VarDeclaration(varName, A1); RESULT.setLine(varNameleft); :}
-               |
-               (ErrorVarDecl) error
-                {: parser.report_error("Bad variable declaration! ", null); :} {: RESULT=new ErrorVarDecl(); :}
-                ;
+VarDecl ::= (VarDeclaration) IDENT:varName ArrOpt:A1 {: RESULT=new VarDeclaration(varName, A1); RESULT.setLine(varNameleft); :}
+            |
+            (ErrorVarDecl) error
+            {: parser.report_error("Bad variable declaration! ", null); :} {: RESULT=new ErrorVarDecl(); :}
+            ;
 
 ArrOpt ::= (ArrayOption) LSQBRACE RSQBRACE {: RESULT=new ArrayOption(); :}
             |
-            (NoArrayOption) {: RESULT=new NoArrayOption(); :};
+            (NoArrayOption) {: RESULT=new NoArrayOption(); :}
+            ;
 
 
-EnumDecl ::= (EnumDeclaration) ENUM IDENT:eName LBRACE EnumList:E1 RBRACE {: RESULT=new EnumDeclaration(eName, E1); RESULT.setLine(eNameleft); :};
+EnumDecl ::= (EnumDecl) EnumStart:E1 LBRACE EnumList:E2 RBRACE {: RESULT=new EnumDecl(E1, E2); RESULT.setLine(E1left); :};
+
+EnumStart ::= (EnumStart) ENUM IDENT:eName {: RESULT=new EnumStart(eName); RESULT.setLine(eNameleft); :};
 
 EnumList ::= (EnumMembersList) EnumList:E1 COMMA EnumMember:E2 {: RESULT=new EnumMembersList(E1, E2); RESULT.setLine(E1left); :}
             | (SingleEnumMember) EnumMember:E1 {: RESULT=new SingleEnumMember(E1); RESULT.setLine(E1left); :}
@@ -192,7 +194,18 @@ EnumInit ::= (SingleEnumInit) ASSIGNMENT NUMBER:enumMemberValue {: RESULT=new Si
               (NoEnumInit) {: RESULT=new NoEnumInit(); :}
               ;
 
-RetType ::= (RetVoid) VOID:retVoid {: RESULT=new RetVoid(); :} | (ReturnType) Type:retType {: RESULT=new ReturnType(retType); RESULT.setLine(retTypeleft); :};
+MethodDeclList ::= (MethodDeclarationList) MethodDeclList:M1 MethodDecl:M2 {: RESULT=new MethodDeclarationList(M1, M2); RESULT.setLine(M1left); :}
+					|
+					(NoMethodDecl) {: RESULT=new NoMethodDecl(); :}/* epsilon */
+					;
+
+MethodDecl ::= (MethodDecl) MethodStart:M1 LPAREN FormParams:F2 RPAREN OptVars:O3 LBRACE Statements:S4 RBRACE {: RESULT=new MethodDecl(M1, F2, O3, S4); RESULT.setLine(M1left); :};
+
+MethodStart ::= (MethodStart) RetType:R1 IDENT:methodName {: RESULT=new MethodStart(R1, methodName); RESULT.setLine(R1left); :};
+
+RetType ::= (RetVoid) VOID:retVoid {: RESULT=new RetVoid(); :}
+            |
+            (ReturnType) Type:retType {: RESULT=new ReturnType(retType); RESULT.setLine(retTypeleft); :};
 
 FormParams ::= (FormParamsDeclaration) FormParams:F1 COMMA FormPara:F2 {: RESULT=new FormParamsDeclaration(F1, F2); RESULT.setLine(F1left); :}
               | (SingleFormParametarDeclaration) FormPara:F1 {: RESULT=new SingleFormParametarDeclaration(F1); RESULT.setLine(F1left); :}
@@ -202,19 +215,13 @@ FormParams ::= (FormParamsDeclaration) FormParams:F1 COMMA FormPara:F2 {: RESULT
               {: parser.report_error("Bad formal argument  ", null); :} {: RESULT=new FormParamsDerived1(); :}
               ;
 
-FormPara ::= (FormalParams) Type:paramType IDENT:paramName ArrOpt:A1 {: RESULT=new FormalParams(paramType, paramName, A1); RESULT.setLine(paramTypeleft); :};
+FormPara ::= (FormPara) Type:paramType IDENT:paramName ArrOpt:A1 {: RESULT=new FormPara(paramType, paramName, A1); RESULT.setLine(paramTypeleft); :};
 
-MethodDeclList ::= (MethodDeclarationList) MethodDeclList:M1 MethodDecl:M2 {: RESULT=new MethodDeclarationList(M1, M2); RESULT.setLine(M1left); :}
-					|
-					(NoMethodDecl) {: RESULT=new NoMethodDecl(); :}/* epsilon */
-					;
-
-MethodDecl ::= (MethodDecl) RetType:R1 IDENT:methodName LPAREN FormParams:F2 RPAREN OptVars:O3 LBRACE Statements:S4 RBRACE {: RESULT=new MethodDecl(R1, methodName, F2, O3, S4); RESULT.setLine(R1left); :};
 
 Statements ::= (StatementList) Statements:S1 Statement:S2 {: RESULT=new StatementList(S1, S2); RESULT.setLine(S1left); :}
-                  |
-                  (NoStatementList) {: RESULT=new NoStatementList(); :}
-                  ;
+               |
+               (NoStatementList) {: RESULT=new NoStatementList(); :}
+               ;
 
 Statement ::= (DesignatorStatement) DesignatorStmt:D1 SEMI {: RESULT=new DesignatorStatement(D1); RESULT.setLine(D1left); :}
 			  |
