@@ -6,6 +6,7 @@ import rs.etf.pp1.symboltable.*;
 import rs.etf.pp1.symboltable.concepts.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 //SymbolTable class extends Tab and wraps its methods
@@ -322,8 +323,89 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     //-----------------------STATEMENTS----------------------------------------
 
 
+    //-----------------------DESIGNATOR STATEMENTS-----------------------------
+
+    public void visit(IncDesignatorStatement incDesignatorStatement) {
+        Obj designatorObj = incDesignatorStatement.getDesignator().obj;
+
+        if (designatorObj.getKind() != Obj.Var) {
+            reportError("Increment operator used on non variable symbol", incDesignatorStatement);
+        }
+
+        if (designatorObj.getType().compatibleWith(SymbolTable.intType)) {
+            reportError("Increment operator used on non integer type", incDesignatorStatement);
+        }
+
+    }
+
+    public void visit(DecDesignatorStatement decDesignatorStatement) {
+        Obj designatorObj = decDesignatorStatement.getDesignator().obj;
+
+        if (designatorObj.getKind() != Obj.Var) {
+            reportError("Decrement operator used on non variable symbol", decDesignatorStatement);
+        }
+
+        if (designatorObj.getType().compatibleWith(SymbolTable.intType)) {
+            reportError("Decrement operator used on non integer type", decDesignatorStatement);
+        }
+    }
+
     //-----------------------DESIGNATORS---------------------------------------
 
-   // public void visit()
+    public void visit(EnumDesignator enumDesignator) {
+        String name = enumDesignator.getDesignatorName();
 
+        Obj designatorObj = SymbolTable.find(name);
+        if (designatorObj == SymbolTable.noObj) {
+            reportError("Symbol used but never defined", enumDesignator);
+        }
+
+        if (designatorObj.getKind() != Obj.Type) {
+            reportError("Symbol matched as enum is not a type kind", enumDesignator);
+        }
+
+        String enumMemberName = enumDesignator.getEnumMember();
+        Collection<Obj> enumMembers = designatorObj.getLocalSymbols();
+        boolean isEnumMember = false;
+        int value = 0;
+        for (Obj currentMember: enumMembers) {
+            if (enumMemberName.equals(currentMember.getName())) {
+                isEnumMember = true;
+                value = currentMember.getAdr();
+            }
+        }
+
+        if (!isEnumMember) {
+            reportError("Enum does not have member searched for", enumDesignator);
+        }
+
+        //set designator values - solve later
+        //enumDesignator.obj.setAdr(value);
+    }
+
+    public void visit(ArrayDesignator arrayDesignator) {
+        String name = arrayDesignator.getDesignatorName();
+
+        Obj designatorObj = SymbolTable.find(name);
+        if (designatorObj == SymbolTable.noObj) {
+            reportError("Symbol used but never defined", arrayDesignator);
+        }
+
+        if (designatorObj.getKind() != Obj.Var && designatorObj.getKind() != Obj.Con) {
+            reportError("Symbol in array place is neither variable nor constant", arrayDesignator);
+        }
+
+        if (!arrayDesignator.getExpr().struct.compatibleWith(SymbolTable.intType)) {
+            reportError("Expression in brackets can not be converted to integer type", arrayDesignator);
+        }
+    }
+
+    public void visit(SimpleDesignator simpleDesignator) {
+        String name = simpleDesignator.getDesignatorName();
+
+        Obj designatorObj = SymbolTable.find(name);
+        if (designatorObj == SymbolTable.noObj) {
+            reportError("Symbol used but never defined", simpleDesignator);
+        }
+    }
 }

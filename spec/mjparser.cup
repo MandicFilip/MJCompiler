@@ -65,19 +65,18 @@ terminal Integer NUMBER;
 terminal Boolean BOOL_CONST;
 
 nonterminal AllDeclList, DeclType, ConstDeclExpression, ConstDeclList, ConstDecl, ConstKind;
-nonterminal VarDeclExpression, VarsList, VarDecl, OptVars, ArrOpt, ArrWithExpr;
+nonterminal VarDeclExpression, VarsList, VarDecl, OptVars, ArrOpt;
 nonterminal EnumDecl, EnumList, EnumMember, EnumInit, VarDeclExpressionList;
 nonterminal RetType, FormParams, FormPara, MethodDeclList;
 nonterminal Statements, Statement, OptDesignatorStatement, OptCondition, ExpressionToPrint;
-nonterminal DesignatorStmt, OptDesignatorStatementExtension, ConditionDecl, IfConditionForm;
-nonterminal CondTerm, CondFact, SignTerm;
-nonterminal ActualPars, ActualParamList, OptDesignatorPart, EnumOption;
+nonterminal DesignatorStmt, ConditionDecl, IfConditionForm;
+nonterminal ActualPars, ActualParamList;
 nonterminal AssignOp, RelOp, Addop, MulOp;
 
-nonterminal Designator, MethodDecl;
-nonterminal Type, Term, Expr, Factor;
+nonterminal MethodDecl;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor, CondTerm, CondFact, SignTerm;
 
-nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, EnumStart, MethodStart;
+nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, EnumStart, MethodStart, Designator;
 
 precedence left ELSE;
 
@@ -234,19 +233,16 @@ ExpressionToPrint ::= (ExpressionToPrintList) ExpressionToPrint COMMA NUMBER:val
                       (SingleExpressionToPrint) Expr:exprToPrint
                       ;
 
-
-DesignatorStmt ::= (DesignatorStatementDef) Designator:dest OptDesignatorStatementExtension;
-
-OptDesignatorStatementExtension ::= (AssignExtension) AssignOp Expr:expValue SEMI
-                                    |
-                                    (ParametarsExtension) LPAREN ActualPars RPAREN SEMI
-                                    |
-                                    (IncExtension) INC SEMI
-                                    |
-                                    (DecExtension) DEC SEMI
-                                    |
-                                    (NoExtension) SEMI
-                                    ;
+DesignatorStmt ::= (AssignDesignatorStatement) Designator:dest AssignOp Expr:expValue
+                   |
+                   (ParametarsDesignatorStatement) Designator:dest LPAREN ActualPars RPAREN
+                   |
+                   (IncDesignatorStatement) Designator:dest INC
+                   |
+                   (DecDesignatorStatement) Designator:dest DEC
+                   |
+                   (SimpleDesignatorStatement) Designator:dest
+                   ;
 
 ConditionDecl ::= (TermListCondition) ConditionDecl OR CondTerm
               |
@@ -255,23 +251,28 @@ ConditionDecl ::= (TermListCondition) ConditionDecl OR CondTerm
 
 CondTerm ::= (CondFactListTerm) CondFact AND CondFact
              |
-             (SingleCondFactTerm) CondFact;
+             (SingleCondFactTerm) CondFact
+             ;
 
 CondFact ::= (ConditionFactor) CondFact RelOp Expr
-           | (SingleCondFact) Expr
-           ;
+             |
+             (SingleCondFact) Expr
+             ;
 
 Expr ::= (TermListExpr) Expr Addop Term
           |
-          (SingleTermExpr) SignTerm;
+          (SingleTermExpr) SignTerm
+          ;
 
 SignTerm ::= (MinusTerm) MINUS Term
              |
-             (NoSignTerm) Term;
+             (NoSignTerm) Term
+             ;
 
 Term ::= (FactorListTerm) Term MulOp Factor
          |
-         (SingleFactorTerm) Factor;
+         (SingleFactorTerm) Factor
+         ;
 
 Factor ::= (ParenFactor) LPAREN Expr RPAREN
 		   |
@@ -279,7 +280,7 @@ Factor ::= (ParenFactor) LPAREN Expr RPAREN
 		   |
 		   (BoolFactor) BOOL_CONST:valBool
 		   |
-		   (NewTypeFactor) NEW Type ArrWithExpr
+		   (NewTypeFactor) NEW Type LSQBRACE Expr:arrExp RSQBRACE
 		   |
 		   (DesignatorFactor) Designator:d
 		   |
@@ -298,28 +299,38 @@ ActualParamList ::= (ParametarsList) ActualParamList COMMA Expr
 					 (SingleExpr) Expr
 					 ;
 
-Designator ::= (Designator) IDENT:dest OptDesignatorPart;
-
-OptDesignatorPart ::= (OptionalEnumDesignatorPart) EnumOption
-                    | (OptionalArrayDesignatorPart) ArrWithExpr
-                    | (NoOptionalPart)
-                    ;
-
-EnumOption ::= (Field) DOT IDENT:desField;
-
-ArrWithExpr ::= (ArrayWithExpr) LSQBRACE Expr:arrExp RSQBRACE;
+Designator ::= (EnumDesignator) IDENT:designatorName DOT IDENT:enumMember
+               |
+               (ArrayDesignator) IDENT:designatorName LSQBRACE Expr:arrExp RSQBRACE
+               |
+               (SimpleDesignator) IDENT:designatorName
+               ;
 
 AssignOp ::= (Assignment) ASSIGNMENT;
 
 RelOp ::= (Equal) EQUAL
-        | (Unequal) UNEQUAL
-        | (Greater) GREATER
-        | (GreaterEqual) GREATER_EQUAL
-        | (Smaller)SMALLER
-        | (SmallerEqual) SMALLER_EQUAL;
+          |
+          (Unequal) UNEQUAL
+          |
+          (Greater) GREATER
+          |
+          (GreaterEqual) GREATER_EQUAL
+          |
+          (Smaller)SMALLER
+          |
+          (SmallerEqual) SMALLER_EQUAL
+          ;
 
-Addop ::= (PlusOp) PLUS | (MinusOp) MINUS;
+Addop ::= (PlusOp) PLUS
+          |
+          (MinusOp) MINUS
+          ;
 
-MulOp ::= (MulOp) MUL | (DivOp) DIV | (ModOp) MOD;
+MulOp ::= (MulOp) MUL
+          |
+          (DivOp) DIV
+          |
+          (ModOp) MOD
+          ;
 
 
