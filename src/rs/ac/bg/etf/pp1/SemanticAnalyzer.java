@@ -325,8 +325,33 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //-----------------------DESIGNATOR STATEMENTS-----------------------------
 
+    public void visit(AssignDesignatorStatement assignDesignatorStatement) {
+        Obj designatorObj = assignDesignatorStatement.getDesignator().obj;
+
+        if (designatorObj == SymbolTable.noObj) {
+            reportError("Error with designator", assignDesignatorStatement);
+            return;
+        }
+
+    }
+
+    public void visit(MethodCallStatement methodCallStatement) {
+        Obj designatorObj = methodCallStatement.getDesignator().obj;
+
+        if (designatorObj == SymbolTable.noObj) {
+            reportError("Error with designator", methodCallStatement);
+            return;
+        }
+
+    }
+
     public void visit(IncDesignatorStatement incDesignatorStatement) {
         Obj designatorObj = incDesignatorStatement.getDesignator().obj;
+
+        if (designatorObj == SymbolTable.noObj) {
+            reportError("Error with designator", incDesignatorStatement);
+            return;
+        }
 
         if (designatorObj.getKind() != Obj.Var) {
             reportError("Increment operator used on non variable symbol", incDesignatorStatement);
@@ -340,6 +365,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     public void visit(DecDesignatorStatement decDesignatorStatement) {
         Obj designatorObj = decDesignatorStatement.getDesignator().obj;
+
+        if (designatorObj == SymbolTable.noObj) {
+            reportError("Error with designator", decDesignatorStatement);
+            return;
+        }
 
         if (designatorObj.getKind() != Obj.Var) {
             reportError("Decrement operator used on non variable symbol", decDesignatorStatement);
@@ -367,45 +397,52 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         String enumMemberName = enumDesignator.getEnumMember();
         Collection<Obj> enumMembers = designatorObj.getLocalSymbols();
         boolean isEnumMember = false;
-        int value = 0;
         for (Obj currentMember: enumMembers) {
             if (enumMemberName.equals(currentMember.getName())) {
                 isEnumMember = true;
-                value = currentMember.getAdr();
+                enumDesignator.obj = currentMember;
+                break;
             }
         }
 
         if (!isEnumMember) {
             reportError("Enum does not have member searched for", enumDesignator);
+            enumDesignator.obj = SymbolTable.noObj;
         }
 
-        //set designator values - solve later
-        //enumDesignator.obj.setAdr(value);
     }
 
     public void visit(ArrayDesignator arrayDesignator) {
         String name = arrayDesignator.getDesignatorName();
 
+        arrayDesignator.obj = SymbolTable.noObj;
+
         Obj designatorObj = SymbolTable.find(name);
         if (designatorObj == SymbolTable.noObj) {
             reportError("Symbol used but never defined", arrayDesignator);
+            return;
         }
 
         if (designatorObj.getKind() != Obj.Var && designatorObj.getKind() != Obj.Con) {
             reportError("Symbol in array place is neither variable nor constant", arrayDesignator);
+            return;
         }
 
         if (!arrayDesignator.getExpr().struct.compatibleWith(SymbolTable.intType)) {
             reportError("Expression in brackets can not be converted to integer type", arrayDesignator);
+            return;
         }
+
+        arrayDesignator.obj = designatorObj;
     }
 
     public void visit(SimpleDesignator simpleDesignator) {
         String name = simpleDesignator.getDesignatorName();
 
-        Obj designatorObj = SymbolTable.find(name);
-        if (designatorObj == SymbolTable.noObj) {
+        simpleDesignator.obj = SymbolTable.find(name);
+        if (simpleDesignator.obj == SymbolTable.noObj) {
             reportError("Symbol used but never defined", simpleDesignator);
+            simpleDesignator.obj = SymbolTable.noObj;
         }
     }
 }

@@ -259,15 +259,15 @@ ExpressionToPrint ::= (ExpressionToPrintList) ExpressionToPrint:E1 COMMA NUMBER:
                       (SingleExpressionToPrint) Expr:exprToPrint {: RESULT=new SingleExpressionToPrint(exprToPrint); RESULT.setLine(exprToPrintleft); :}
                       ;
 
-DesignatorStmt ::= (AssignDesignatorStatement) Designator:dest AssignOp:A1 Expr:expValue {: RESULT=new AssignDesignatorStatement(dest, A1, expValue); RESULT.setLine(destleft); :}
+DesignatorStmt ::= (AssignDesignatorStatement) Designator:designator AssignOp:A1 Expr:expValue {: RESULT=new AssignDesignatorStatement(designator, A1, expValue); RESULT.setLine(designatorleft); :}
                    |
-                   (ParametarsDesignatorStatement) Designator:dest LPAREN ActualPars:A1 RPAREN {: RESULT=new ParametarsDesignatorStatement(dest, A1); RESULT.setLine(destleft); :}
+                   (MethodCallStatement) Designator:designator LPAREN ActualPars:A1 RPAREN {: RESULT=new MethodCallStatement(designator, A1); RESULT.setLine(designatorleft); :}
                    |
-                   (IncDesignatorStatement) Designator:dest INC {: RESULT=new IncDesignatorStatement(dest); RESULT.setLine(destleft); :}
+                   (IncDesignatorStatement) Designator:designator INC {: RESULT=new IncDesignatorStatement(designator); RESULT.setLine(designatorleft); :}
                    |
-                   (DecDesignatorStatement) Designator:dest DEC {: RESULT=new DecDesignatorStatement(dest); RESULT.setLine(destleft); :}
+                   (DecDesignatorStatement) Designator:designator DEC {: RESULT=new DecDesignatorStatement(designator); RESULT.setLine(designatorleft); :}
                    |
-                   (SimpleDesignatorStatement) Designator:dest {: RESULT=new SimpleDesignatorStatement(dest); RESULT.setLine(destleft); :}
+                   (SimpleDesignatorStatement) Designator:designator {: RESULT=new SimpleDesignatorStatement(designator); RESULT.setLine(designatorleft); :}
                    ;
 
 ConditionDecl ::= (TermListCondition) ConditionDecl:C1 OR CondTerm:C2 {: RESULT=new TermListCondition(C1, C2); RESULT.setLine(C1left); :}

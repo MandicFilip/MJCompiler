@@ -233,15 +233,15 @@ ExpressionToPrint ::= (ExpressionToPrintList) ExpressionToPrint COMMA NUMBER:val
                       (SingleExpressionToPrint) Expr:exprToPrint
                       ;
 
-DesignatorStmt ::= (AssignDesignatorStatement) Designator:dest AssignOp Expr:expValue
+DesignatorStmt ::= (AssignDesignatorStatement) Designator:designator AssignOp Expr:expValue
                    |
-                   (ParametarsDesignatorStatement) Designator:dest LPAREN ActualPars RPAREN
+                   (MethodCallStatement) Designator:designator LPAREN ActualPars RPAREN
                    |
-                   (IncDesignatorStatement) Designator:dest INC
+                   (IncDesignatorStatement) Designator:designator INC
                    |
-                   (DecDesignatorStatement) Designator:dest DEC
+                   (DecDesignatorStatement) Designator:designator DEC
                    |
-                   (SimpleDesignatorStatement) Designator:dest
+                   (SimpleDesignatorStatement) Designator:designator
                    ;
 
 ConditionDecl ::= (TermListCondition) ConditionDecl OR CondTerm
