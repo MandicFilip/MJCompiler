@@ -1,5 +1,6 @@
 package rs.ac.bg.etf.pp1;
 
+import org.apache.log4j.Logger;
 import rs.ac.bg.etf.pp1.ast.*;
 import rs.etf.pp1.symboltable.*;
 import rs.etf.pp1.symboltable.concepts.*;
@@ -20,6 +21,37 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     private static boolean hasReturnExpr = false;
     private static boolean isMainDefined = false;
+    private static boolean errorsInCode = false;
+
+    private Logger logger = Logger.getLogger(getClass());
+    //----------------ERROR REPORT---------------------------------------------
+
+    void reportError(String message, SyntaxNode node) {
+        errorsInCode = true;
+        print_error(message, node);
+    }
+
+    //----------------ERROR REPORT---------------------------------------------
+
+    void print_error(String message, SyntaxNode node) {
+        StringBuilder builder = new StringBuilder(message);
+        int line = (node == null) ? 0 : node.getLine();
+        if (line != 0) {
+            builder.append(" on line " + line);
+        }
+        logger.error(builder.toString());
+    }
+
+    void print_info(String message, SyntaxNode node) {
+        StringBuilder builder = new StringBuilder(message);
+        int line = (node == null) ? 0 : node.getLine();
+        if (line != 0) {
+            builder.append(" on line " + line);
+        }
+        logger.info(builder.toString());
+    }
+
+    //----------------HELP METHODS---------------------------------------------
 
     private boolean isSymbolDefined(String typeName) {
         Obj foundObj = SymbolTable.find(typeName);
@@ -76,10 +108,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             if (foundObj.getKind() == Obj.Type) {
                 currentTypeObj = foundObj;
             } else {
-                //TODO report error - found ident in symbol table but it is not a type
+                reportError("Identifier is not a type", type);
             }
         } else {
-            //TODO report error - no type in symbol table
+            reportError("Type not recognized", type);
 
             currentTypeObj = SymbolTable.noObj;
         }
@@ -89,14 +121,15 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     public void visit(ConstDecl constDecl) {
         if (currentTypeObj == SymbolTable.noObj) {
-            //TODO error in type already reported
+            reportError("Const type is not correct", constDecl);
+
             return;
         }
 
         String constName = constDecl.getConstName();
         Obj constObj = SymbolTable.find(constName);
         if (constObj == SymbolTable.noObj) {
-            //TODO error symbol with that name already exists
+            reportError("Symbol used for const name is already defined", constDecl);
             return;
         }
 
@@ -120,7 +153,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             } //no need for else - init to 0
 
         } else {
-            //TODO report error - wrong const type
+            reportError("Const type is wrong", constDecl);
         }
 
         if (currentTypeObj.getType().assignableTo(rightSide)) {
@@ -135,7 +168,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     public void visit(VarDecl varDecl) {
 
         if (currentTypeObj == SymbolTable.noObj) {
-            //TODO report error type unknown - already reported in type
+            reportError("Variable type is not correct", varDecl);
             return;
         }
 
@@ -147,7 +180,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
         String varName = varDeclaration.getVarName();
         if (isDefinedInCurrentScope(varName) || isMethodAndVarWithSameName(varName)) {
-            //TODO report error symbol with that name already exists
+            reportError("Symbol used for variable name is already defined in this scope", varDecl);
             return;
         }
 
@@ -178,7 +211,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     public void visit(EnumMember enumMember) {
         String enumName = enumMember.getEnumMemberName();
         if (isDefinedInCurrentScope(enumName) || isEnumAndVarWithSameName(enumName)) {
-            //TODO report error symbol with that name already exists
+            reportError("Symbol used for enum const name is already defined", enumMember);
             return;
         }
 
@@ -193,7 +226,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             Obj newEnum = SymbolTable.insert(Obj.Con, enumName, SymbolTable.intType);
             newEnum.setAdr(value);
         } else {
-            //TODO report error two same values in one enum
+            reportError("Two enum constants have same value", enumMember);
         }
     }
 
@@ -202,7 +235,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     public void visit(MethodDecl methodDecl) {
 
         if (currentMethod == SymbolTable.noObj) {
-            //TODO report error currentMethod not set
+            reportError("Method matched, but method name is not set", methodDecl);
             return;
         }
 
@@ -210,11 +243,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
         String methodName = currentMethod.getName();
         if (methodName.equals("main") && !isMainCorrect()) {
-            //TODO report error main has wrong signature
+            reportError("Method main has wrong signature", methodDecl);
         }
 
         if (!hasReturnExpr && currentMethod.getType() != SymbolTable.noType) {
-            //TODO report error function which returns value has no return expr
+            reportError("Non void function has no return statement or no expression in return statement", methodDecl);
             hasReturnExpr = false;
         }
 
@@ -226,7 +259,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         String methodName = methodStart.getMethodName();
 
         if (isSymbolDefined(methodName)) {
-            //TODO report error symbol already defined
+            reportError("Symbol used for enum name is already defined", methodStart);
             return;
         }
 
@@ -257,12 +290,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         String formParaName = formPara.getParamName();
 
         if (currentTypeObj == SymbolTable.noObj) {
-            //TODO report error type unknown - already reported in type
+            reportError("Type used for formal argument is not correct", formPara);
             return;
         }
 
         if (isDefinedInCurrentScope(formParaName)) {
-            //TODO report error form parameter already defined in this scope
+            reportError("Symbol used for formal argument name is already defined in current scope", formPara);
             return;
         }
 
