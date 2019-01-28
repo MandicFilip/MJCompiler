@@ -31,6 +31,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_error(message, node);
     }
 
+    public static boolean isErrorsInCode() {
+        return errorsInCode;
+    }
+
     //----------------ERROR REPORT---------------------------------------------
 
     void print_error(String message, SyntaxNode node) {
@@ -89,6 +93,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     //--------------------PROGRAM----------------------------------------------
 
     public void visit(Program program) {
+        if (!isMainDefined) {
+            reportError("main method is not defined", program);
+        }
+
         SymbolTable.chainLocalSymbols(program.getProgName().obj);
         SymbolTable.closeScope();
     }
@@ -103,16 +111,17 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     public void visit(Type type) {
         String typeName = type.getTName();
 
-        if (isSymbolDefined(typeName)) {
-            Obj foundObj = SymbolTable.find(typeName);
-            if (foundObj.getKind() == Obj.Type) {
-                currentTypeObj = foundObj;
-            } else {
-                reportError("Identifier is not a type", type);
-            }
-        } else {
+        if (!isSymbolDefined(typeName)) {
             reportError("Type not recognized", type);
+            currentTypeObj = SymbolTable.noObj;
+            return;
+        }
 
+        Obj foundObj = SymbolTable.find(typeName);
+        if (foundObj.getKind() == Obj.Type) {
+            currentTypeObj = foundObj;
+        } else {
+            reportError("Identifier is not a type", type);
             currentTypeObj = SymbolTable.noObj;
         }
     }
@@ -154,6 +163,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
         } else {
             reportError("Const type is wrong", constDecl);
+            return;
         }
 
         if (currentTypeObj.getType().assignableTo(rightSide)) {
@@ -248,7 +258,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
         if (!hasReturnExpr && currentMethod.getType() != SymbolTable.noType) {
             reportError("Non void function has no return statement or no expression in return statement", methodDecl);
-            hasReturnExpr = false;
         }
 
         currentMethod = SymbolTable.noObj;
@@ -279,6 +288,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         SymbolTable.openScope();
 
         currentMethod.setLevel(0); //set number of parameters to 0 before parameters list
+        hasReturnExpr = false;
     }
 
     //this can't be done in method declaration because params are needed for recursion
@@ -310,5 +320,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     }
 
     //-----------------------STATEMENTS----------------------------------------
+
+
+    //-----------------------DESIGNATORS---------------------------------------
+
+   // public void visit()
 
 }
