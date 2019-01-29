@@ -94,6 +94,7 @@ nonterminal ConditionDecl ConditionDecl;
 nonterminal IfConditionForm IfConditionForm;
 nonterminal ActualPars ActualPars;
 nonterminal ActualParamList ActualParamList;
+nonterminal ActualParametar ActualParametar;
 nonterminal AssignOp AssignOp;
 nonterminal RelOp RelOp;
 nonterminal Addop Addop;
@@ -102,7 +103,7 @@ nonterminal MulOp MulOp;
 nonterminal MethodDecl MethodDecl;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor, CondTerm, CondFact, SignTerm;
 
-nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, EnumStart, MethodStart, Designator;
+nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, EnumStart, MethodStart, Designator, MethodCallStart, MethodCall;
 
 precedence left ELSE;
 
@@ -261,19 +262,21 @@ ExpressionToPrint ::= (ExpressionToPrintList) ExpressionToPrint:E1 COMMA NUMBER:
 
 DesignatorStmt ::= (AssignDesignatorStatement) Designator:designator AssignOp:A1 Expr:expValue {: RESULT=new AssignDesignatorStatement(designator, A1, expValue); RESULT.setLine(designatorleft); :}
                    |
-                   (MethodCallStatement) Designator:designator LPAREN ActualPars:A1 RPAREN {: RESULT=new MethodCallStatement(designator, A1); RESULT.setLine(designatorleft); :}
+                   (MethodCallStatement) MethodCall:M1 {: RESULT=new MethodCallStatement(M1); RESULT.setLine(M1left); :}
                    |
                    (IncDesignatorStatement) Designator:designator INC {: RESULT=new IncDesignatorStatement(designator); RESULT.setLine(designatorleft); :}
                    |
                    (DecDesignatorStatement) Designator:designator DEC {: RESULT=new DecDesignatorStatement(designator); RESULT.setLine(designatorleft); :}
-                   |
-                   (SimpleDesignatorStatement) Designator:designator {: RESULT=new SimpleDesignatorStatement(designator); RESULT.setLine(designatorleft); :}
                    ;
 
+MethodCall ::= (MethodCall) MethodCallStart:M1 ActualPars:A2 RPAREN {: RESULT=new MethodCall(M1, A2); RESULT.setLine(M1left); :};
+
+MethodCallStart ::= (MethodCallStart) Designator:designator LPAREN {: RESULT=new MethodCallStart(designator); RESULT.setLine(designatorleft); :};
+
 ConditionDecl ::= (TermListCondition) ConditionDecl:C1 OR CondTerm:C2 {: RESULT=new TermListCondition(C1, C2); RESULT.setLine(C1left); :}
-              |
-              (SingleTermCondition) CondTerm:C1 {: RESULT=new SingleTermCondition(C1); RESULT.setLine(C1left); :}
-              ;
+                  |
+                  (SingleTermCondition) CondTerm:C1 {: RESULT=new SingleTermCondition(C1); RESULT.setLine(C1left); :}
+                  ;
 
 CondTerm ::= (CondFactListTerm) CondFact:C1 AND CondFact:C2 {: RESULT=new CondFactListTerm(C1, C2); RESULT.setLine(C1left); :}
              |
@@ -310,7 +313,7 @@ Factor ::= (ParenFactor) LPAREN Expr:E1 RPAREN {: RESULT=new ParenFactor(E1); RE
 		   |
 		   (DesignatorFactor) Designator:d {: RESULT=new DesignatorFactor(d); RESULT.setLine(dleft); :}
 		   |
-		   (FunCallFactor) Designator:func LPAREN ActualPars:A1 RPAREN {: RESULT=new FunCallFactor(func, A1); RESULT.setLine(funcleft); :}
+		   (FunCallFactor) MethodCall:M1 {: RESULT=new FunCallFactor(M1); RESULT.setLine(M1left); :}
 		   |
 		   (NumberFactor) NUMBER:valueNumber {: RESULT=new NumberFactor(valueNumber); RESULT.setLine(valueNumberleft); :}
 		   ;
@@ -320,10 +323,12 @@ ActualPars ::= (ActualParametarsList) ActualParamList:A1 {: RESULT=new ActualPar
 			   (NoActualParametarsList) {: RESULT=new NoActualParametarsList(); :}
 			   ;
 
-ActualParamList ::= (ParametarsList) ActualParamList:A1 COMMA Expr:E2 {: RESULT=new ParametarsList(A1, E2); RESULT.setLine(A1left); :}
+ActualParamList ::= (ParametarsList) ActualParamList:A1 COMMA ActualParametar:A2 {: RESULT=new ParametarsList(A1, A2); RESULT.setLine(A1left); :}
 					 |
-					 (SingleExpr) Expr:E1 {: RESULT=new SingleExpr(E1); RESULT.setLine(E1left); :}
+					 (SingleActualParametar) ActualParametar:A1 {: RESULT=new SingleActualParametar(A1); RESULT.setLine(A1left); :}
 					 ;
+
+ActualParametar ::= (ActualParametar) Expr:E1 {: RESULT=new ActualParametar(E1); RESULT.setLine(E1left); :};
 
 Designator ::= (EnumDesignator) IDENT:designatorName DOT IDENT:enumMember {: RESULT=new EnumDesignator(designatorName, enumMember); RESULT.setLine(designatorNameleft); :}
                |

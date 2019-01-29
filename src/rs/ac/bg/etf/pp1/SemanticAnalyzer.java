@@ -2,15 +2,12 @@ package rs.ac.bg.etf.pp1;
 
 import org.apache.log4j.Logger;
 import rs.ac.bg.etf.pp1.ast.*;
-import rs.etf.pp1.symboltable.*;
 import rs.etf.pp1.symboltable.concepts.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-//SymbolTable class extends Tab and wraps its methods
-//Use SymbolTable for methods and Boolean Const
 public class SemanticAnalyzer extends VisitorAdaptor {
 
     private static Obj currentTypeObj = SymbolTable.noObj;
@@ -23,6 +20,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     private static boolean hasReturnExpr = false;
     private static boolean isMainDefined = false;
     private static boolean errorsInCode = false;
+
+    private ActualParametersBuffer actualParametersBuffer = new ActualParametersBuffer();
+
+    private static int ifLevel = 0;
+    private static int forLevel = 0;
 
     private Logger logger = Logger.getLogger(getClass());
     //----------------ERROR REPORT---------------------------------------------
@@ -146,7 +148,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         ConstKind constKind = constDecl.getConstKind();
 
         int constValue = 0;
-        Struct rightSide = SymbolTable.noType;
+        Struct rightSide;
 
         if (constKind instanceof ConstNumber) {
             rightSide = SymbolTable.intType;
@@ -322,6 +324,33 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //-----------------------STATEMENTS----------------------------------------
 
+    public void visit(ContinueStatement continueStatement) {
+        if (forLevel == 0) {
+            reportError("Continue statement found outside of loop", continueStatement);
+        }
+    }
+
+    public void visit(BreakStatement breakStatement) {
+        if (forLevel == 0) {
+            reportError("Break statement found outside of loop", breakStatement);
+        }
+    }
+
+    public void visit(ReturnExpStatement returnExpStatement) {
+        hasReturnExpr = true;
+
+        //TODO check the type
+    }
+
+    public void visit(ReadStatement readStatement) {
+        //has to be variable
+    }
+
+    public void printStatement(PrintStatement printStatement) {
+
+    }
+
+    //if and for should change in grammar
 
     //-----------------------DESIGNATOR STATEMENTS-----------------------------
 
@@ -333,16 +362,16 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             return;
         }
 
+        Struct leftSideType = designatorObj.getType();
+        Struct rightSideType = assignDesignatorStatement.getExpr().struct;
+        if (!leftSideType.assignableTo(rightSideType)) {
+            reportError("Right side can't be assigned to left", assignDesignatorStatement);
+        }
+
     }
 
     public void visit(MethodCallStatement methodCallStatement) {
-        Obj designatorObj = methodCallStatement.getDesignator().obj;
-
-        if (designatorObj == SymbolTable.noObj) {
-            reportError("Error with designator", methodCallStatement);
-            return;
-        }
-
+        //done in MethodCall visit
     }
 
     public void visit(IncDesignatorStatement incDesignatorStatement) {
@@ -445,4 +474,67 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             simpleDesignator.obj = SymbolTable.noObj;
         }
     }
+
+
+    //-----------------------ACTUAL PARAMETERS---------------------------------
+
+    public void visit(MethodCallStart methodCallStart) {
+        methodCallStart.obj = methodCallStart.getDesignator().obj;
+
+        actualParametersBuffer.createParametersList();
+    }
+
+    public void visit(ActualParametar actualParametar) {
+        Expr expr = actualParametar.getExpr();
+        Struct type = expr.struct;
+
+        if (!actualParametersBuffer.insertActualParameter(type)) {
+            reportError("Actual Parameter Processing but method start not found", actualParametar);
+        }
+    }
+
+    public void visit(MethodCall methodCall) {
+        Designator designator = methodCall.getMethodCallStart().getDesignator();
+        Obj designatorObj = designator.obj;
+
+        if (!(designator instanceof SimpleDesignator)) {
+            reportError("Error method call on enum or array", methodCall);
+            return;
+        }
+
+        if (designatorObj == SymbolTable.noObj) {
+            reportError("Error with designator", methodCall);
+            return;
+        }
+
+        if (designatorObj.getKind() != Obj.Meth) {
+            reportError("Designator is not declared as a method", methodCall);
+            return;
+        }
+
+        List<Struct> actualParametersList = actualParametersBuffer.getParameters();
+
+        if (actualParametersList == null) {
+            reportError("Method call processing but method start not found", methodCall);
+        }
+
+        int formalParsNumber = designatorObj.getLevel();
+
+        if (actualParametersList.size() != formalParsNumber) {
+            reportError("Wrong number of parameters", methodCall);
+        }
+
+        Collection<Obj> formalParameters = designatorObj.getLocalSymbols();
+        int i = 0;
+        for (Obj currentParameter: formalParameters) {
+            if (i >= formalParsNumber) break;
+
+            Struct type = currentParameter.getType();
+            if (!actualParametersList.get(i).assignableTo(type)) {
+                reportError("Actual parameter at position " + i + " has wrong type", methodCall);
+            }
+            i++;
+        }
+    }
+
 }

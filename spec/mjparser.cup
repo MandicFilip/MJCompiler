@@ -70,13 +70,13 @@ nonterminal EnumDecl, EnumList, EnumMember, EnumInit, VarDeclExpressionList;
 nonterminal RetType, FormParams, FormPara, MethodDeclList;
 nonterminal Statements, Statement, OptDesignatorStatement, OptCondition, ExpressionToPrint;
 nonterminal DesignatorStmt, ConditionDecl, IfConditionForm;
-nonterminal ActualPars, ActualParamList;
+nonterminal ActualPars, ActualParamList, ActualParametar;
 nonterminal AssignOp, RelOp, Addop, MulOp;
 
 nonterminal MethodDecl;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor, CondTerm, CondFact, SignTerm;
 
-nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, EnumStart, MethodStart, Designator;
+nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, EnumStart, MethodStart, Designator, MethodCallStart, MethodCall;
 
 precedence left ELSE;
 
@@ -235,19 +235,21 @@ ExpressionToPrint ::= (ExpressionToPrintList) ExpressionToPrint COMMA NUMBER:val
 
 DesignatorStmt ::= (AssignDesignatorStatement) Designator:designator AssignOp Expr:expValue
                    |
-                   (MethodCallStatement) Designator:designator LPAREN ActualPars RPAREN
+                   (MethodCallStatement) MethodCall
                    |
                    (IncDesignatorStatement) Designator:designator INC
                    |
                    (DecDesignatorStatement) Designator:designator DEC
-                   |
-                   (SimpleDesignatorStatement) Designator:designator
                    ;
 
+MethodCall ::= (MethodCall) MethodCallStart ActualPars RPAREN;
+
+MethodCallStart ::= (MethodCallStart) Designator:designator LPAREN;
+
 ConditionDecl ::= (TermListCondition) ConditionDecl OR CondTerm
-              |
-              (SingleTermCondition) CondTerm
-              ;
+                  |
+                  (SingleTermCondition) CondTerm
+                  ;
 
 CondTerm ::= (CondFactListTerm) CondFact AND CondFact
              |
@@ -284,7 +286,7 @@ Factor ::= (ParenFactor) LPAREN Expr RPAREN
 		   |
 		   (DesignatorFactor) Designator:d
 		   |
-		   (FunCallFactor) Designator:func LPAREN ActualPars RPAREN
+		   (FunCallFactor) MethodCall
 		   |
 		   (NumberFactor) NUMBER:valueNumber
 		   ;
@@ -294,10 +296,12 @@ ActualPars ::= (ActualParametarsList) ActualParamList
 			   (NoActualParametarsList)
 			   ;
 
-ActualParamList ::= (ParametarsList) ActualParamList COMMA Expr
+ActualParamList ::= (ParametarsList) ActualParamList COMMA ActualParametar
 					 |
-					 (SingleExpr) Expr
+					 (SingleActualParametar) ActualParametar
 					 ;
+
+ActualParametar ::= (ActualParametar) Expr;
 
 Designator ::= (EnumDesignator) IDENT:designatorName DOT IDENT:enumMember
                |
