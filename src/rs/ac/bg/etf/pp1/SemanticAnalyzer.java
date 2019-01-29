@@ -369,7 +369,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     }
 
     public void visit(PrintStatement printStatement) {
+        Struct type = printStatement.getExpressionToPrint().getExpr().struct;
 
+        if (type != SymbolTable.intType && type != SymbolTable.charType && type != SymbolTable.boolType) {
+            reportError("Print expression is not a basic type", printStatement);
+        }
     }
 
     public void visit(IfStart ifStart) {
@@ -394,7 +398,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     public void visit(ForStart forStart) {
         forLevel++;
-
     }
 
     public void visit(ForStatement forStatement) {
@@ -424,7 +427,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         if (!leftSideType.assignableTo(rightSideType)) {
             reportError("Right side can't be assigned to left", assignDesignatorStatement);
         }
-
     }
 
     public void visit(MethodCallStatement methodCallStatement) {
@@ -446,7 +448,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         if (designatorObj.getType().compatibleWith(SymbolTable.intType)) {
             reportError("Increment operator used on non integer type", incDesignatorStatement);
         }
-
     }
 
     public void visit(DecDesignatorStatement decDesignatorStatement) {
@@ -495,7 +496,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             reportError("Enum does not have member searched for", enumDesignator);
             enumDesignator.obj = SymbolTable.noObj;
         }
-
     }
 
     public void visit(ArrayDesignator arrayDesignator) {
@@ -531,7 +531,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             simpleDesignator.obj = SymbolTable.noObj;
         }
     }
-
 
     //-----------------------ACTUAL PARAMETERS---------------------------------
 
@@ -593,5 +592,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             i++;
         }
     }
+
+    //---------------------EXPRESSIONS-----------------------------------------
+
+
+    //---------------------CONDITIONS------------------------------------------
 
 }

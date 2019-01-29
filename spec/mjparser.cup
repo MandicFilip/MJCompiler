@@ -68,7 +68,7 @@ nonterminal AllDeclList, DeclType, ConstDeclExpression, ConstDeclList, ConstDecl
 nonterminal VarDeclExpression, VarsList, VarDecl, OptVars, ArrOpt;
 nonterminal EnumDecl, EnumList, EnumMember, EnumInit, VarDeclExpressionList;
 nonterminal RetType, FormParams, FormPara, MethodDeclList;
-nonterminal Statements, Statement, OptDesignatorStatement, OptCondition, ExpressionToPrint;
+nonterminal Statements, Statement, OptDesignatorStatement, OptCondition, ExpressionToPrint, OptConstantsToPrint;
 nonterminal DesignatorStmt, ConditionDecl, IfConditionForm, IfStart, ForStart;
 nonterminal ActualPars, ActualParamList, ActualParametar;
 nonterminal AssignOp, RelOp, Addop, MulOp;
@@ -232,10 +232,12 @@ OptCondition::= (Condition) ConditionDecl
                 (NoCondition)
                 ;
 
-ExpressionToPrint ::= (ExpressionToPrintList) ExpressionToPrint COMMA NUMBER:value
-                      |
-                      (SingleExpressionToPrint) Expr:exprToPrint
-                      ;
+ExpressionToPrint ::= (ExpressionToPrint) Expr:exprToPrint OptConstantsToPrint;
+
+OptConstantsToPrint ::= (ConstantsToPrint) OptConstantsToPrint COMMA NUMBER:value
+                        |
+                        (NoConstantsToPrint)
+                        ;
 
 DesignatorStmt ::= (AssignDesignatorStatement) Designator:designator AssignOp Expr:expValue
                    |
