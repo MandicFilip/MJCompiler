@@ -69,7 +69,7 @@ nonterminal VarDeclExpression, VarsList, VarDecl, OptVars, ArrOpt;
 nonterminal EnumDecl, EnumList, EnumMember, EnumInit, VarDeclExpressionList;
 nonterminal RetType, FormParams, FormPara, MethodDeclList;
 nonterminal Statements, Statement, OptDesignatorStatement, OptCondition, ExpressionToPrint;
-nonterminal DesignatorStmt, ConditionDecl, IfConditionForm;
+nonterminal DesignatorStmt, ConditionDecl, IfConditionForm, IfStart, ForStart;
 nonterminal ActualPars, ActualParamList, ActualParametar;
 nonterminal AssignOp, RelOp, Addop, MulOp;
 
@@ -191,11 +191,11 @@ Statement ::= (DesignatorStatement) DesignatorStmt SEMI
               Designator AssignOp error SEMI:l
               {: parser.report_error("Bad assignment statement until ; on line " + lleft, null); :}
               |
-			  (IfStatement) IF IfConditionForm Statement
+			  (IfStatement) IfStart Statement
 			  |
-			  (IfElseStatement) IF IfConditionForm Statement ELSE Statement
+			  (IfElseStatement) IfStart Statement ELSE Statement
 			  |
-			  (ForStatement) FOR LPAREN OptDesignatorStatement SEMI OptCondition SEMI OptDesignatorStatement RPAREN Statement
+			  (ForStatement) ForStart Statement
 			  |
 			  (BreakStatement) BREAK SEMI
 			  |
@@ -211,6 +211,10 @@ Statement ::= (DesignatorStatement) DesignatorStmt SEMI
 			  |
 			  (StatementBlock) LBRACE Statements RBRACE
 			  ;
+
+IfStart ::= (IfStart) IF IfConditionForm;
+
+ForStart ::= (ForStart) FOR LPAREN OptDesignatorStatement SEMI OptCondition SEMI OptDesignatorStatement RPAREN;
 
 OptDesignatorStatement ::= (SingleDesignatorStatement) DesignatorStmt
                            |

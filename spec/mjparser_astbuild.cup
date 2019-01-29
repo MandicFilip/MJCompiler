@@ -92,6 +92,8 @@ nonterminal ExpressionToPrint ExpressionToPrint;
 nonterminal DesignatorStmt DesignatorStmt;
 nonterminal ConditionDecl ConditionDecl;
 nonterminal IfConditionForm IfConditionForm;
+nonterminal IfStart IfStart;
+nonterminal ForStart ForStart;
 nonterminal ActualPars ActualPars;
 nonterminal ActualParamList ActualParamList;
 nonterminal ActualParametar ActualParametar;
@@ -218,11 +220,11 @@ Statement ::= (DesignatorStatement) DesignatorStmt:D1 SEMI {: RESULT=new Designa
               Designator:D1 AssignOp:A2 error SEMI:l
               {: parser.report_error("Bad assignment statement until ; on line " + lleft, null); :} {: RESULT=new StatementDerived1(D1, A2); RESULT.setLine(D1left); :}
               |
-			  (IfStatement) IF IfConditionForm:I1 Statement:S2 {: RESULT=new IfStatement(I1, S2); RESULT.setLine(I1left); :}
+			  (IfStatement) IfStart:I1 Statement:S2 {: RESULT=new IfStatement(I1, S2); RESULT.setLine(I1left); :}
 			  |
-			  (IfElseStatement) IF IfConditionForm:I1 Statement:S2 ELSE Statement:S3 {: RESULT=new IfElseStatement(I1, S2, S3); RESULT.setLine(I1left); :}
+			  (IfElseStatement) IfStart:I1 Statement:S2 ELSE Statement:S3 {: RESULT=new IfElseStatement(I1, S2, S3); RESULT.setLine(I1left); :}
 			  |
-			  (ForStatement) FOR LPAREN OptDesignatorStatement:O1 SEMI OptCondition:O2 SEMI OptDesignatorStatement:O3 RPAREN Statement:S4 {: RESULT=new ForStatement(O1, O2, O3, S4); RESULT.setLine(O1left); :}
+			  (ForStatement) ForStart:F1 Statement:S2 {: RESULT=new ForStatement(F1, S2); RESULT.setLine(F1left); :}
 			  |
 			  (BreakStatement) BREAK SEMI {: RESULT=new BreakStatement(); :}
 			  |
@@ -238,6 +240,10 @@ Statement ::= (DesignatorStatement) DesignatorStmt:D1 SEMI {: RESULT=new Designa
 			  |
 			  (StatementBlock) LBRACE Statements:S1 RBRACE {: RESULT=new StatementBlock(S1); RESULT.setLine(S1left); :}
 			  ;
+
+IfStart ::= (IfStart) IF IfConditionForm:I1 {: RESULT=new IfStart(I1); RESULT.setLine(I1left); :};
+
+ForStart ::= (ForStart) FOR LPAREN OptDesignatorStatement:O1 SEMI OptCondition:O2 SEMI OptDesignatorStatement:O3 RPAREN {: RESULT=new ForStart(O1, O2, O3); RESULT.setLine(O1left); :};
 
 OptDesignatorStatement ::= (SingleDesignatorStatement) DesignatorStmt:D1 {: RESULT=new SingleDesignatorStatement(D1); RESULT.setLine(D1left); :}
                            |

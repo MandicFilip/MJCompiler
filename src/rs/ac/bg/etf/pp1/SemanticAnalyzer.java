@@ -100,6 +100,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             reportError("main method is not defined", program);
         }
 
+        if (ifLevel != 0) {
+            reportError("If level is not 0 at the end of program", program);
+        }
+
+        if (forLevel != 0) {
+            reportError("For level is not 0 at the end of program", program);
+        }
+
         SymbolTable.chainLocalSymbols(program.getProgName().obj);
         SymbolTable.closeScope();
     }
@@ -337,20 +345,65 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     }
 
     public void visit(ReturnExpStatement returnExpStatement) {
+        if (currentMethod == SymbolTable.noObj) {
+            reportError("Return statement found, but not in function", returnExpStatement);
+            return;
+        }
+
         hasReturnExpr = true;
 
-        //TODO check the type
+        Struct retType = returnExpStatement.getExpr().struct;
+        Struct methodType = currentMethod.getType();
+
+        if (retType != methodType) {
+            reportError("Return type is wrong", returnExpStatement);
+        }
     }
 
     public void visit(ReadStatement readStatement) {
-        //has to be variable
+        Obj designatorObj = readStatement.getDesignator().obj;
+
+        if (designatorObj.getKind() != Obj.Var) {
+            reportError("Read parameter is not a variable", readStatement);
+        }
     }
 
-    public void printStatement(PrintStatement printStatement) {
+    public void visit(PrintStatement printStatement) {
 
     }
 
-    //if and for should change in grammar
+    public void visit(IfStart ifStart) {
+        ifLevel++;
+    }
+
+    public void visit(IfStatement ifStatement) {
+        ifLevel--;
+
+        if (ifLevel < 0) {
+            reportError("IfLevel error", ifStatement);
+        }
+    }
+
+    public void visit(IfElseStatement ifElseStatement) {
+        ifLevel--;
+
+        if (ifLevel < 0) {
+            reportError("IfLevel error", ifElseStatement);
+        }
+    }
+
+    public void visit(ForStart forStart) {
+        forLevel++;
+
+    }
+
+    public void visit(ForStatement forStatement) {
+        forLevel--;
+
+        if (forLevel < 0) {
+            reportError("IfLevel error", forStatement);
+        }
+    }
 
     //-----------------------DESIGNATOR STATEMENTS-----------------------------
 
@@ -360,6 +413,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         if (designatorObj == SymbolTable.noObj) {
             reportError("Error with designator", assignDesignatorStatement);
             return;
+        }
+
+        if (designatorObj.getKind() != Obj.Var) {
+            reportError("Left side is not a variable", assignDesignatorStatement);
         }
 
         Struct leftSideType = designatorObj.getType();
