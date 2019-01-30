@@ -593,9 +593,96 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         }
     }
 
+    //---------------------CONDITIONS------------------------------------------
+
+    public void visit(ConditionFactor conditionFactor) {
+        Struct type = conditionFactor.getExpr().struct;
+        if (type.getKind() == Struct.Array) {
+            RelOp relOp = conditionFactor.getRelOp();
+            if (!(relOp instanceof Equal) && !(relOp instanceof Unequal)) {
+                reportError("Illegal operand used on array in condition", conditionFactor);
+                conditionFactor.struct = SymbolTable.boolType;
+                return;
+            }
+        }
+        if (!type.compatibleWith(conditionFactor.getCondFact().struct)) {
+            reportError("Incompatible types in condition check", conditionFactor);
+        }
+        conditionFactor.struct = SymbolTable.boolType;
+    }
+
+    public void visit(SingleCondFact singleCondFact) {
+        singleCondFact.struct = singleCondFact.getExpr().struct;
+    }
+
+    public void visit(SingleCondFactTerm singleCondFactTerm) {
+        if (singleCondFactTerm.getCondFact().struct != SymbolTable.boolType) {
+            reportError("Condition terminal is not boolean", singleCondFactTerm);
+        }
+        singleCondFactTerm.struct = SymbolTable.boolType;
+    }
+
+    public void visit(CondFactListTerm condFactListTerm) {
+        Struct leftType = condFactListTerm.getCondTerm().struct;
+        Struct rightType = condFactListTerm.getCondFact().struct;
+        if ((leftType != SymbolTable.boolType) || (rightType != SymbolTable.boolType)) {
+            reportError("One of the condition factors in AND operator is not bool type", condFactListTerm);
+        }
+        condFactListTerm.struct = SymbolTable.boolType;
+    }
+
+    public void visit(SingleTermCondition singleTermCondition) {
+        singleTermCondition.struct = singleTermCondition.getCondTerm().struct;
+    }
+
+    public void visit(TermListCondition termListCondition) {
+        Struct leftType = termListCondition.getConditionDecl().struct;
+        Struct rightType = termListCondition.getCondTerm().struct;
+        if ((leftType != SymbolTable.boolType) || (rightType != SymbolTable.boolType)) {
+            reportError("One of the condition factors in OR operator is not bool type", termListCondition);
+        }
+        termListCondition.struct = SymbolTable.boolType;
+    }
+
     //---------------------EXPRESSIONS-----------------------------------------
 
+    public void visit(TermListExpr termListExpr) {
+        Struct leftType = termListExpr.getExpr().struct;
+        Struct rightType = termListExpr.getTerm().struct;
 
-    //---------------------CONDITIONS------------------------------------------
+        if ((leftType != SymbolTable.intType) || (rightType != SymbolTable.intType)) {
+            reportError("One of the condition factors in MulOp operator is not int type", termListExpr);
+        }
+        termListExpr.struct = SymbolTable.intType;
+    }
+
+    public void visit(SingleTermExpr singleTermExpr) {
+        singleTermExpr.struct = singleTermExpr.getSignTerm().struct;
+    }
+
+    public void visit(MinusTerm minusTerm) {
+        if (minusTerm.getTerm().struct != SymbolTable.intType) {
+            reportError("Minus operator used on non int term", minusTerm);
+        }
+        minusTerm.struct = SymbolTable.intType;
+    }
+
+    public void visit(NoSignTerm noSignTerm) {
+        noSignTerm.struct = noSignTerm.getTerm().struct;
+    }
+
+    public void visit(FactorListTerm factorListTerm) {
+        Struct leftType = factorListTerm.getTerm().struct;
+        Struct rightType = factorListTerm.getFactor().struct;
+
+        if ((leftType != SymbolTable.intType) || (rightType != SymbolTable.intType)) {
+            reportError("One of the condition factors in MulOp operator is not int type", factorListTerm);
+        }
+        factorListTerm.struct = SymbolTable.intType;
+    }
+
+    public void visit(SingleFactorTerm singleFactorTerm) {
+        singleFactorTerm.struct = singleFactorTerm.getFactor().struct;
+    }
 
 }

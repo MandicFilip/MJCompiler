@@ -69,12 +69,12 @@ nonterminal VarDeclExpression, VarsList, VarDecl, OptVars, ArrOpt;
 nonterminal EnumDecl, EnumList, EnumMember, EnumInit, VarDeclExpressionList;
 nonterminal RetType, FormParams, FormPara, MethodDeclList;
 nonterminal Statements, Statement, OptDesignatorStatement, OptCondition, ExpressionToPrint, OptConstantsToPrint;
-nonterminal DesignatorStmt, ConditionDecl, IfConditionForm, IfStart, ForStart;
+nonterminal DesignatorStmt, IfConditionForm, IfStart, ForStart;
 nonterminal ActualPars, ActualParamList, ActualParametar;
 nonterminal AssignOp, RelOp, Addop, MulOp;
 
 nonterminal MethodDecl;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor, CondTerm, CondFact, SignTerm;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor, CondTerm, CondFact, SignTerm, ConditionDecl;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, EnumStart, MethodStart, Designator, MethodCallStart, MethodCall;
 
@@ -257,7 +257,7 @@ ConditionDecl ::= (TermListCondition) ConditionDecl OR CondTerm
                   (SingleTermCondition) CondTerm
                   ;
 
-CondTerm ::= (CondFactListTerm) CondFact AND CondFact
+CondTerm ::= (CondFactListTerm) CondTerm AND CondFact
              |
              (SingleCondFactTerm) CondFact
              ;
@@ -342,5 +342,3 @@ MulOp ::= (MulOp) MUL
           |
           (ModOp) MOD
           ;
-
-

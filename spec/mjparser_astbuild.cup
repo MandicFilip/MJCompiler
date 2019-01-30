@@ -91,7 +91,6 @@ nonterminal OptCondition OptCondition;
 nonterminal ExpressionToPrint ExpressionToPrint;
 nonterminal OptConstantsToPrint OptConstantsToPrint;
 nonterminal DesignatorStmt DesignatorStmt;
-nonterminal ConditionDecl ConditionDecl;
 nonterminal IfConditionForm IfConditionForm;
 nonterminal IfStart IfStart;
 nonterminal ForStart ForStart;
@@ -104,7 +103,7 @@ nonterminal Addop Addop;
 nonterminal MulOp MulOp;
 
 nonterminal MethodDecl MethodDecl;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor, CondTerm, CondFact, SignTerm;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor, CondTerm, CondFact, SignTerm, ConditionDecl;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, EnumStart, MethodStart, Designator, MethodCallStart, MethodCall;
 
@@ -287,7 +286,7 @@ ConditionDecl ::= (TermListCondition) ConditionDecl:C1 OR CondTerm:C2 {: RESULT=
                   (SingleTermCondition) CondTerm:C1 {: RESULT=new SingleTermCondition(C1); RESULT.setLine(C1left); :}
                   ;
 
-CondTerm ::= (CondFactListTerm) CondFact:C1 AND CondFact:C2 {: RESULT=new CondFactListTerm(C1, C2); RESULT.setLine(C1left); :}
+CondTerm ::= (CondFactListTerm) CondTerm:C1 AND CondFact:C2 {: RESULT=new CondFactListTerm(C1, C2); RESULT.setLine(C1left); :}
              |
              (SingleCondFactTerm) CondFact:C1 {: RESULT=new SingleCondFactTerm(C1); RESULT.setLine(C1left); :}
              ;
@@ -372,5 +371,3 @@ MulOp ::= (MulOp) MUL {: RESULT=new MulOp(); :}
           |
           (ModOp) MOD {: RESULT=new ModOp(); :}
           ;
-
-
