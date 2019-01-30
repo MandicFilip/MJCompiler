@@ -110,11 +110,15 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
         SymbolTable.chainLocalSymbols(program.getProgName().obj);
         SymbolTable.closeScope();
+
+        print_info("Program visit", program);
     }
 
     public void visit(ProgName progName) {
         progName.obj = SymbolTable.insert(Obj.Prog, progName.getPName(), SymbolTable.noType);
         SymbolTable.openScope();
+
+        print_info("ProgName visit", progName);
     }
 
     //-----------------------Type----------------------------------------------
@@ -135,6 +139,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             reportError("Identifier is not a type", type);
             currentTypeObj = SymbolTable.noObj;
         }
+
+        print_info("Type visit", type);
     }
 
     //----------------------CONST----------------------------------------------
@@ -182,6 +188,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             newConst.setAdr(constValue); //init const
         }
 
+        print_info("ConstDecl visit", constDecl);
     }
 
     //-----------------------VARIABLE------------------------------------------
@@ -212,6 +219,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         else {
             SymbolTable.insert(Obj.Var, varName, currentTypeObj.getType());
         }
+
+        print_info("VarDecl visit", varDecl);
     }
 
 
@@ -220,6 +229,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     public void visit(EnumDecl enumDecl) {
         SymbolTable.chainLocalSymbols(enumDecl.getEnumStart().obj);
         SymbolTable.closeScope();
+
+        print_info("EnumDecl visit", enumDecl);
     }
 
     public void visit(EnumStart enumStart) {
@@ -227,6 +238,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         SymbolTable.openScope();
         nextEnumValue = 0;
         enumValues.clear();
+
+        print_info("EnumDecl visit", enumStart);
     }
 
     public void visit(EnumMember enumMember) {
@@ -249,6 +262,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         } else {
             reportError("Two enum constants have same value", enumMember);
         }
+
+        print_info("EnumDecl visit", enumMember);
     }
 
     //--------------------METHODS----------------------------------------------
@@ -273,6 +288,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
         currentMethod = SymbolTable.noObj;
         SymbolTable.closeScope();
+
+        print_info("MethodDecl visit", methodDecl);
     }
 
     public void visit(MethodStart methodStart) {
@@ -300,11 +317,15 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
         currentMethod.setLevel(0); //set number of parameters to 0 before parameters list
         hasReturnExpr = false;
+
+        print_info("MethodStart visit", methodStart);
     }
 
     //this can't be done in method declaration because params are needed for recursion
     public void visit(FormParams formParams) {
         currentMethod.setLocals(SymbolTable.currentScope().getLocals());
+
+        print_info("FormParams visit", formParams);
     }
 
     public void visit(FormPara formPara) {
@@ -328,6 +349,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         else {
             SymbolTable.insert(Obj.Var, formParaName, currentTypeObj.getType());
         }
+
+        print_info("FormPara visit", formPara);
     }
 
     //-----------------------STATEMENTS----------------------------------------
@@ -509,8 +532,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             return;
         }
 
-        if (designatorObj.getKind() != Obj.Var && designatorObj.getKind() != Obj.Con) {
-            reportError("Symbol in array place is neither variable nor constant", arrayDesignator);
+        if (designatorObj.getKind() != Obj.Var) {
+            reportError("Symbol in array place is not variable", arrayDesignator);
             return;
         }
 
@@ -683,6 +706,37 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     public void visit(SingleFactorTerm singleFactorTerm) {
         singleFactorTerm.struct = singleFactorTerm.getFactor().struct;
+    }
+
+    public void visit(ParenFactor parenFactor) {
+        parenFactor.struct = parenFactor.getExpr().struct;
+    }
+
+    public void visit(NumberFactor numberFactor) {
+        numberFactor.struct = SymbolTable.intType;
+    }
+
+    public void visit(CharFactor charFactor) {
+        charFactor.struct = SymbolTable.charType;
+    }
+
+    public void visit(BoolFactor boolFactor) {
+        boolFactor.struct = SymbolTable.boolType;
+    }
+
+    public void visit(NewTypeFactor newTypeFactor) {
+        newTypeFactor.struct = new Struct(Struct.Array, newTypeFactor.getType().struct);
+        if (newTypeFactor.getExpr().struct != SymbolTable.intType) {
+            reportError("Expression in NEW statement is not int", newTypeFactor);
+        }
+    }
+
+    public void visit(DesignatorFactor designatorFactor) {
+        designatorFactor.struct = designatorFactor.getDesignator().obj.getType();
+    }
+
+    public void visit(FunCallFactor funCallFactor) {
+        funCallFactor.struct = funCallFactor.getMethodCall().getMethodCallStart().getDesignator().obj.getType();
     }
 
 }
