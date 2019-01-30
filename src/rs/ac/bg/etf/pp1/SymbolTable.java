@@ -18,9 +18,9 @@ public class SymbolTable extends Tab{
     public static final Struct enumType = new Struct(ENUM_TYPE);
 
     public static void init() {
+        Tab.init();
         currentScope.addToLocals(new Obj(2, "bool", boolType));
         currentScope.addToLocals(new Obj(2, "enum", enumType));
-        Tab.init();
     }
 
     public static void chainLocalSymbols(Obj outerScopeObj) {
