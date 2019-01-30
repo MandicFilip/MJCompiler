@@ -493,7 +493,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             reportError("Increment operator used on non variable symbol", incDesignatorStatement);
         }
 
-        if (designatorObj.getType().compatibleWith(SymbolTable.intType)) {
+        if (!designatorObj.getType().compatibleWith(SymbolTable.intType)) {
             reportError("Increment operator used on non integer type", incDesignatorStatement);
         }
 
@@ -512,7 +512,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             reportError("Decrement operator used on non variable symbol", decDesignatorStatement);
         }
 
-        if (designatorObj.getType().compatibleWith(SymbolTable.intType)) {
+        if (!designatorObj.getType().compatibleWith(SymbolTable.intType)) {
             reportError("Decrement operator used on non integer type", decDesignatorStatement);
         }
 
@@ -586,7 +586,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             reportError("Symbol used but never defined", simpleDesignator);
             simpleDesignator.obj = SymbolTable.noObj;
         }
-
         print_info("SimpleDesignator", simpleDesignator);
     }
 
@@ -739,6 +738,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     public void visit(SingleTermExpr singleTermExpr) {
         singleTermExpr.struct = singleTermExpr.getSignTerm().struct;
+
+        print_info("SingleTermExpr visit", singleTermExpr);
     }
 
     public void visit(MinusTerm minusTerm) {
