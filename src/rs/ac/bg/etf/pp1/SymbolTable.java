@@ -16,17 +16,11 @@ public class SymbolTable extends Tab{
 
     public static final Struct boolType = new Struct(BOOLEAN_TYPE);
     public static final Struct enumType = new Struct(ENUM_TYPE);
-    public static Obj printObj;
 
     public static void init() {
-        currentScope.addToLocals(new Obj(2, "int", boolType));
-
-
-        currentScope.addToLocals(printObj = new Obj(3, "print", Tab.noType, 0, 1));
-        openScope();
-        currentScope.addToLocals(new Obj(1, "arr", new Struct(3, noType), 0, 1));
-        printObj.setLocals(currentScope.getLocals());
-        closeScope();
+        currentScope.addToLocals(new Obj(2, "bool", boolType));
+        currentScope.addToLocals(new Obj(2, "enum", enumType));
+        Tab.init();
     }
 
     public static void chainLocalSymbols(Obj outerScopeObj) {

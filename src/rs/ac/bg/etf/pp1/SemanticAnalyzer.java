@@ -26,6 +26,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     private static int ifLevel = 0;
     private static int forLevel = 0;
 
+    private static final int MAX_LOCAL_VARIABLES = 256;
+    private static final int MAX_GLOBAL_VARIABLES = 65536;
+
     private Logger logger = Logger.getLogger(getClass());
     //----------------ERROR REPORT---------------------------------------------
 
@@ -58,6 +61,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         logger.info(builder.toString());
     }
 
+    //----------------CONSTRUCTOR----------------------------------------------
+
+    public SemanticAnalyzer() {
+        SymbolTable.init();
+    }
+
     //----------------HELP METHODS---------------------------------------------
 
     private boolean isSymbolDefined(String typeName) {
@@ -80,8 +89,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     }
 
     private boolean checkIfEnumValueIsUnique(int value) {
-        for (int i = 0; i < enumValues.size(); i++) {
-            if (value == enumValues.get(i)) return false;
+        for (Integer enumValue : enumValues) {
+            if (value == enumValue) return false;
         }
         return true;
     }
@@ -172,7 +181,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             rightSide = SymbolTable.charType;
             constValue = ((ConstChar) constKind).getCharValue();
 
-        } if (constKind instanceof ConstBool) {
+        } else if (constKind instanceof ConstBool) {
             rightSide = SymbolTable.boolType;
             if (((ConstBool) constKind).getBoolValue()) {
                 constValue = 1;
@@ -312,7 +321,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         if (methodName.equals("main"))
             isMainDefined = true;
 
-        currentMethod = SymbolTable.insert(Obj.Meth, methodName, type);
+        methodStart.obj = currentMethod = SymbolTable.insert(Obj.Meth, methodName, type);
         SymbolTable.openScope();
 
         currentMethod.setLevel(0); //set number of parameters to 0 before parameters list
@@ -591,10 +600,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             return;
         }
 
+        methodCall.obj = designatorObj;
+
         List<Struct> actualParametersList = actualParametersBuffer.getParameters();
 
         if (actualParametersList == null) {
             reportError("Method call processing but method start not found", methodCall);
+            return;
         }
 
         int formalParsNumber = designatorObj.getLevel();
