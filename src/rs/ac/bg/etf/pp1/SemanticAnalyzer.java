@@ -26,8 +26,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     private static int ifLevel = 0;
     private static int forLevel = 0;
 
+    private boolean isMethodValid;
+
     private static final int MAX_LOCAL_VARIABLES = 256;
     private static final int MAX_GLOBAL_VARIABLES = 65536;
+
+    private static int local_variables_count = 0;
+    private static int global_variables_count = 0;
 
     private Logger logger = Logger.getLogger(getClass());
     //----------------ERROR REPORT---------------------------------------------
@@ -117,6 +122,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             reportError("For level is not 0 at the end of program", program);
         }
 
+        if (global_variables_count > MAX_GLOBAL_VARIABLES) {
+            reportError("Program has more than 65535 variables", program);
+        }
+
         SymbolTable.chainLocalSymbols(program.getProgName().obj);
         SymbolTable.closeScope();
 
@@ -148,6 +157,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             reportError("Identifier is not a type", type);
             currentTypeObj = SymbolTable.noObj;
         }
+        type.struct = foundObj.getType();
 
         print_info("Type visit", type);
     }
@@ -195,6 +205,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         if (currentTypeObj.getType().assignableTo(rightSide)) {
             Obj newConst = SymbolTable.insert(Obj.Con, constName, rightSide);
             newConst.setAdr(constValue); //init const
+        } else {
+            reportError("Const init value has wrong type", constDecl);
         }
 
         print_info("ConstDecl visit", constDecl);
@@ -205,7 +217,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     public void visit(VarDeclaration varDecl) {
 
         if (currentTypeObj == SymbolTable.noObj) {
-            reportError("Variable type is not correct", varDecl);
+            reportError("Variable type is not correct", varDecl); //bag from type
             return;
         }
 
@@ -222,6 +234,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         else {
             SymbolTable.insert(Obj.Var, varName, currentTypeObj.getType());
         }
+
+        if (currentMethod != SymbolTable.noObj) global_variables_count++;
+        else local_variables_count++;
 
         print_info("VarDecl visit", varDecl);
     }
@@ -262,6 +277,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         if (checkIfEnumValueIsUnique(value)) {
             Obj newEnum = SymbolTable.insert(Obj.Con, enumName, SymbolTable.intType);
             newEnum.setAdr(value);
+            enumValues.add(value);
         } else {
             reportError("Two enum constants have same value", enumMember);
         }
@@ -278,29 +294,35 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             return;
         }
 
-        SymbolTable.chainLocalSymbols(currentMethod);
+        if (isMethodValid) SymbolTable.chainLocalSymbols(currentMethod);
 
         String methodName = currentMethod.getName();
         if (methodName.equals("main") && !isMainCorrect()) {
             reportError("Method main has wrong signature", methodDecl);
         }
 
-        if (!hasReturnExpr && currentMethod.getType() != SymbolTable.noType) {
+        if (!hasReturnExpr && (currentMethod.getType() != SymbolTable.noType)) {
             reportError("Non void function has no return statement or no expression in return statement", methodDecl);
         }
 
         currentMethod = SymbolTable.noObj;
         SymbolTable.closeScope();
 
+        if (local_variables_count > MAX_LOCAL_VARIABLES) {
+            reportError("Method have more than 256 variables", methodDecl);
+        }
+        local_variables_count = 0;
+
         print_info("MethodDecl visit", methodDecl);
     }
 
     public void visit(MethodStart methodStart) {
         String methodName = methodStart.getMethodName();
+        isMethodValid = true;
 
         if (isSymbolDefined(methodName)) {
-            reportError("Symbol used for enum name is already defined", methodStart);
-            return;
+            reportError("Symbol used for method name is already defined in this scope", methodStart);
+            isMethodValid = false;
         }
 
         RetType retType = methodStart.getRetType();
@@ -312,10 +334,19 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             type = currentTypeObj.getType();
         }
 
-        if (methodName.equals("main"))
+        if (methodName.equals("main")) {
+            if (isMainDefined) {
+                reportError("Multiple definitions of main method", methodStart);
+                isMethodValid = false;
+            }
             isMainDefined = true;
+        }
 
-        methodStart.obj = currentMethod = SymbolTable.insert(Obj.Meth, methodName, type);
+        if (isMethodValid) {
+            methodStart.obj = currentMethod = SymbolTable.insert(Obj.Meth, methodName, type);
+        } else {
+            methodStart.obj = currentMethod = new Obj(Obj.Meth, methodName, type);
+        }
         SymbolTable.openScope();
 
         currentMethod.setLevel(0); //set number of parameters to 0 before parameters list
@@ -394,6 +425,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     public void visit(ReadStatement readStatement) {
         Obj designatorObj = readStatement.getDesignator().obj;
+        Struct type = designatorObj.getType();
+
+        if (type != SymbolTable.intType && type != SymbolTable.charType && type != SymbolTable.boolType) {
+            reportError("Read parameter not a basic type", readStatement);
+        }
 
         if (designatorObj.getKind() != Obj.Var) {
             reportError("Read parameter is not a variable", readStatement);
@@ -469,6 +505,15 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
         Struct leftSideType = designatorObj.getType();
         Struct rightSideType = assignDesignatorStatement.getExpr().struct;
+
+        if ((leftSideType.getKind() != Struct.Array) && (rightSideType.getKind() == Struct.Array)) {
+            rightSideType = rightSideType.getElemType();
+        }
+
+        if ((leftSideType.getKind() == Struct.Array) && (rightSideType.getKind() != Struct.Array)) {
+            leftSideType = leftSideType.getElemType();
+        }
+
         if (!leftSideType.assignableTo(rightSideType)) {
             reportError("Right side can't be assigned to left", assignDesignatorStatement);
         }

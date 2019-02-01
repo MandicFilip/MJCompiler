@@ -64,11 +64,11 @@ terminal Character CHARCONST;
 terminal Integer NUMBER;
 terminal Boolean BOOL_CONST;
 
-nonterminal AllDeclList, DeclType, ConstDeclExpression, ConstDeclList, ConstDecl, ConstKind;
+nonterminal AllDeclList, DeclType, ConstDeclExpression, ConstDeclList, ConstDecl, ConstKind, NumberConst;
 nonterminal VarDeclExpression, VarsList, VarDecl, OptVars, ArrOpt;
 nonterminal EnumDecl, EnumList, EnumMember, EnumInit, VarDeclExpressionList;
 nonterminal RetType, FormParams, FormPara, MethodDeclList;
-nonterminal Statements, Statement, OptDesignatorStatement, OptCondition, ExpressionToPrint, OptConstantsToPrint;
+nonterminal Statements, Statement, OptDesignatorStatement, OptCondition, ExpressionToPrint;
 nonterminal DesignatorStmt, IfConditionForm, IfStart, ForStart;
 nonterminal ActualPars, ActualParamList, ActualParametar;
 nonterminal AssignOp, RelOp, Addop, MulOp;
@@ -106,12 +106,18 @@ ConstDeclList ::= (ConstDeclarationList) ConstDeclList COMMA ConstDecl
 
 ConstDecl ::= (ConstDecl) IDENT:constName ASSIGNMENT ConstKind:constValue;
 
-ConstKind ::= (ConstNumber) NUMBER:numValue
+ConstKind ::= (ConstNumber) NumberConst:numValue
             |
             (ConstChar) CHARCONST:charValue
             |
             (ConstBool) BOOL_CONST:boolValue
             ;
+
+NumberConst :: = (JustNumber) NUMBER:value;
+                 |
+                 (PositiveNumber) PLUS NUMBER:value;
+                 |
+                 (NegativeNumber) MINUS NUMBER:value;
 
 OptVars ::= (OptVarsList) VarDeclExpressionList
             |
@@ -152,7 +158,7 @@ EnumList ::= (EnumMembersList) EnumList COMMA EnumMember
 
 EnumMember ::= (EnumMember) IDENT:enumMemberName EnumInit;
 
-EnumInit ::= (SingleEnumInit) ASSIGNMENT NUMBER:enumMemberValue
+EnumInit ::= (SingleEnumInit) ASSIGNMENT NumberConst:enumMemberValue
               |
               (NoEnumInit)
               ;
@@ -232,12 +238,10 @@ OptCondition::= (Condition) ConditionDecl
                 (NoCondition)
                 ;
 
-ExpressionToPrint ::= (ExpressionToPrint) Expr:exprToPrint OptConstantsToPrint;
-
-OptConstantsToPrint ::= (ConstantsToPrint) OptConstantsToPrint COMMA NUMBER:value
-                        |
-                        (NoConstantsToPrint)
-                        ;
+ExpressionToPrint ::= (ExpressionToPrint) Expr:exprToPrint
+                      |
+                      (ExpressionAndConstToPrint) Expr:exprToPrint COMMA NUMBER:value
+                      ;
 
 DesignatorStmt ::= (AssignDesignatorStatement) Designator:designator AssignOp Expr:expValue
                    |

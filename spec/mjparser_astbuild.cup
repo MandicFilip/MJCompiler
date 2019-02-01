@@ -89,7 +89,6 @@ nonterminal Statement Statement;
 nonterminal OptDesignatorStatement OptDesignatorStatement;
 nonterminal OptCondition OptCondition;
 nonterminal ExpressionToPrint ExpressionToPrint;
-nonterminal OptConstantsToPrint OptConstantsToPrint;
 nonterminal DesignatorStmt DesignatorStmt;
 nonterminal IfConditionForm IfConditionForm;
 nonterminal IfStart IfStart;
@@ -261,12 +260,10 @@ OptCondition::= (Condition) ConditionDecl:C1 {: RESULT=new Condition(C1); RESULT
                 (NoCondition) {: RESULT=new NoCondition(); :}
                 ;
 
-ExpressionToPrint ::= (ExpressionToPrint) Expr:exprToPrint OptConstantsToPrint:O1 {: RESULT=new ExpressionToPrint(exprToPrint, O1); RESULT.setLine(exprToPrintleft); :};
-
-OptConstantsToPrint ::= (ConstantsToPrint) OptConstantsToPrint:O1 COMMA NUMBER:value {: RESULT=new ConstantsToPrint(O1, value); RESULT.setLine(O1left); :}
-                        |
-                        (NoConstantsToPrint) {: RESULT=new NoConstantsToPrint(); :}
-                        ;
+ExpressionToPrint ::= (ExpressionToPrint) Expr:exprToPrint {: RESULT=new ExpressionToPrint(exprToPrint); RESULT.setLine(exprToPrintleft); :}
+                      |
+                      (ExpressionAndConstToPrint) Expr:exprToPrint COMMA NUMBER:value {: RESULT=new ExpressionAndConstToPrint(exprToPrint, value); RESULT.setLine(exprToPrintleft); :}
+                      ;
 
 DesignatorStmt ::= (AssignDesignatorStatement) Designator:designator AssignOp:A1 Expr:expValue {: RESULT=new AssignDesignatorStatement(designator, A1, expValue); RESULT.setLine(designatorleft); :}
                    |
