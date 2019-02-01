@@ -105,6 +105,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         return currentMethod.getLevel() == 0 && currentMethod.getType() == SymbolTable.noType;
     }
 
+    private int getNumberConstValue(NumberConst numberConst) {
+        if (numberConst instanceof JustNumber) return ((JustNumber) numberConst).getValue();
+        else if (numberConst instanceof PositiveNumber) return ((PositiveNumber) numberConst).getValue();
+        else return -1 * ((NegativeNumber) numberConst).getValue();
+    }
+
     //--------------------VISIT METHODS----------------------------------------
 
     //--------------------PROGRAM----------------------------------------------
@@ -185,7 +191,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
         if (constKind instanceof ConstNumber) {
             rightSide = SymbolTable.intType;
-            constValue = ((ConstNumber) constKind).getNumValue();
+            constValue = getNumberConstValue(((ConstNumber) constKind).getNumberConst());
 
         } else if (constKind instanceof ConstChar) {
             rightSide = SymbolTable.charType;
@@ -270,7 +276,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         int value = nextEnumValue++;
         EnumInit enumInit = enumMember.getEnumInit();
         if (enumInit instanceof SingleEnumInit) {
-            value = ((SingleEnumInit)enumInit).getEnumMemberValue();
+            value = getNumberConstValue(((SingleEnumInit)enumInit).getNumberConst());
             nextEnumValue = value + 1;
         }
 
@@ -439,7 +445,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     }
 
     public void visit(PrintStatement printStatement) {
-        Struct type = printStatement.getExpressionToPrint().getExpr().struct;
+        ExpressionToPrint ex = printStatement.getExpressionToPrint();
+        Struct type;
+
+        if (ex instanceof ExpressionAndConstToPrint) {
+            type = ((ExpressionAndConstToPrint) ex).getExpr().struct;
+        }
+        else type = ((OnlyExpressionToPrint) ex).getExpr().struct;
 
         if (type != SymbolTable.intType && type != SymbolTable.charType && type != SymbolTable.boolType) {
             reportError("Print expression is not a basic type", printStatement);

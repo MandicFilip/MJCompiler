@@ -113,11 +113,12 @@ ConstKind ::= (ConstNumber) NumberConst:numValue
             (ConstBool) BOOL_CONST:boolValue
             ;
 
-NumberConst :: = (JustNumber) NUMBER:value;
-                 |
-                 (PositiveNumber) PLUS NUMBER:value;
-                 |
-                 (NegativeNumber) MINUS NUMBER:value;
+NumberConst ::= (JustNumber) NUMBER:value
+                |
+                (PositiveNumber) PLUS NUMBER:value
+                |
+                (NegativeNumber) MINUS NUMBER:value
+                ;
 
 OptVars ::= (OptVarsList) VarDeclExpressionList
             |
@@ -238,7 +239,7 @@ OptCondition::= (Condition) ConditionDecl
                 (NoCondition)
                 ;
 
-ExpressionToPrint ::= (ExpressionToPrint) Expr:exprToPrint
+ExpressionToPrint ::= (OnlyExpressionToPrint) Expr:exprToPrint
                       |
                       (ExpressionAndConstToPrint) Expr:exprToPrint COMMA NUMBER:value
                       ;

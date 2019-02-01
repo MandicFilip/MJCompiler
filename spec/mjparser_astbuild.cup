@@ -70,6 +70,7 @@ nonterminal ConstDeclExpression ConstDeclExpression;
 nonterminal ConstDeclList ConstDeclList;
 nonterminal ConstDecl ConstDecl;
 nonterminal ConstKind ConstKind;
+nonterminal NumberConst NumberConst;
 nonterminal VarDeclExpression VarDeclExpression;
 nonterminal VarsList VarsList;
 nonterminal VarDecl VarDecl;
@@ -134,12 +135,19 @@ ConstDeclList ::= (ConstDeclarationList) ConstDeclList:C1 COMMA ConstDecl:C2 {: 
 
 ConstDecl ::= (ConstDecl) IDENT:constName ASSIGNMENT ConstKind:constValue {: RESULT=new ConstDecl(constName, constValue); RESULT.setLine(constNameleft); :};
 
-ConstKind ::= (ConstNumber) NUMBER:numValue {: RESULT=new ConstNumber(numValue); RESULT.setLine(numValueleft); :}
+ConstKind ::= (ConstNumber) NumberConst:numValue {: RESULT=new ConstNumber(numValue); RESULT.setLine(numValueleft); :}
             |
             (ConstChar) CHARCONST:charValue {: RESULT=new ConstChar(charValue); RESULT.setLine(charValueleft); :}
             |
             (ConstBool) BOOL_CONST:boolValue {: RESULT=new ConstBool(boolValue); RESULT.setLine(boolValueleft); :}
             ;
+
+NumberConst ::= (JustNumber) NUMBER:value {: RESULT=new JustNumber(value); RESULT.setLine(valueleft); :}
+                |
+                (PositiveNumber) PLUS NUMBER:value {: RESULT=new PositiveNumber(value); RESULT.setLine(valueleft); :}
+                |
+                (NegativeNumber) MINUS NUMBER:value {: RESULT=new NegativeNumber(value); RESULT.setLine(valueleft); :}
+                ;
 
 OptVars ::= (OptVarsList) VarDeclExpressionList:V1 {: RESULT=new OptVarsList(V1); RESULT.setLine(V1left); :}
             |
@@ -180,7 +188,7 @@ EnumList ::= (EnumMembersList) EnumList:E1 COMMA EnumMember:E2 {: RESULT=new Enu
 
 EnumMember ::= (EnumMember) IDENT:enumMemberName EnumInit:E1 {: RESULT=new EnumMember(enumMemberName, E1); RESULT.setLine(enumMemberNameleft); :};
 
-EnumInit ::= (SingleEnumInit) ASSIGNMENT NUMBER:enumMemberValue {: RESULT=new SingleEnumInit(enumMemberValue); RESULT.setLine(enumMemberValueleft); :}
+EnumInit ::= (SingleEnumInit) ASSIGNMENT NumberConst:enumMemberValue {: RESULT=new SingleEnumInit(enumMemberValue); RESULT.setLine(enumMemberValueleft); :}
               |
               (NoEnumInit) {: RESULT=new NoEnumInit(); :}
               ;
@@ -260,7 +268,7 @@ OptCondition::= (Condition) ConditionDecl:C1 {: RESULT=new Condition(C1); RESULT
                 (NoCondition) {: RESULT=new NoCondition(); :}
                 ;
 
-ExpressionToPrint ::= (ExpressionToPrint) Expr:exprToPrint {: RESULT=new ExpressionToPrint(exprToPrint); RESULT.setLine(exprToPrintleft); :}
+ExpressionToPrint ::= (OnlyExpressionToPrint) Expr:exprToPrint {: RESULT=new OnlyExpressionToPrint(exprToPrint); RESULT.setLine(exprToPrintleft); :}
                       |
                       (ExpressionAndConstToPrint) Expr:exprToPrint COMMA NUMBER:value {: RESULT=new ExpressionAndConstToPrint(exprToPrint, value); RESULT.setLine(exprToPrintleft); :}
                       ;
