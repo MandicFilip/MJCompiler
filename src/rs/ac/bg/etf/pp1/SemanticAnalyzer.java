@@ -420,6 +420,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         hasReturnExpr = true;
 
         Struct retType = returnExpStatement.getExpr().struct;
+
+//        if (retType.getKind() == Struct.Array) {
+//            retType = retType.getElemType();
+//        }
+
         Struct methodType = currentMethod.getType();
 
         if (retType != methodType) {
@@ -518,13 +523,15 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         Struct leftSideType = designatorObj.getType();
         Struct rightSideType = assignDesignatorStatement.getExpr().struct;
 
-        if ((leftSideType.getKind() != Struct.Array) && (rightSideType.getKind() == Struct.Array)) {
-            rightSideType = rightSideType.getElemType();
-        }
-
-        if ((leftSideType.getKind() == Struct.Array) && (rightSideType.getKind() != Struct.Array)) {
-            leftSideType = leftSideType.getElemType();
-        }
+//        if ((leftSideType.getKind() != Struct.Array) &&
+//                (leftSideType != SymbolTable.nullType) && (rightSideType.getKind() == Struct.Array)) {
+//            rightSideType = rightSideType.getElemType();
+//        }
+//
+//        if ((leftSideType.getKind() == Struct.Array) &&
+//                (rightSideType.getKind() != Struct.Array) && (leftSideType != SymbolTable.nullType) ) {
+//            leftSideType = leftSideType.getElemType();
+//        }
 
         if (!leftSideType.assignableTo(rightSideType)) {
             reportError("Right side can't be assigned to left", assignDesignatorStatement);
@@ -550,7 +557,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             reportError("Increment operator used on non variable symbol", incDesignatorStatement);
         }
 
-        if (!designatorObj.getType().compatibleWith(SymbolTable.intType)) {
+        Struct type = designatorObj.getType();
+
+        if (!type.compatibleWith(SymbolTable.intType)) {
             reportError("Increment operator used on non integer type", incDesignatorStatement);
         }
 
@@ -569,7 +578,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             reportError("Decrement operator used on non variable symbol", decDesignatorStatement);
         }
 
-        if (!designatorObj.getType().compatibleWith(SymbolTable.intType)) {
+        Struct type = designatorObj.getType();
+
+        if (!type.compatibleWith(SymbolTable.intType)) {
             reportError("Decrement operator used on non integer type", decDesignatorStatement);
         }
 
@@ -582,6 +593,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         String name = enumDesignator.getDesignatorName();
 
         Obj designatorObj = SymbolTable.find(name);
+
+        if (designatorObj.getKind() != Obj.Type) {
+            reportError("Symbol used for enum name is not enum type", enumDesignator);
+            enumDesignator.obj = SymbolTable.noObj;
+            return;
+        }
+
         if (designatorObj == SymbolTable.noObj) {
             reportError("Symbol used but never defined", enumDesignator);
         }
@@ -609,12 +627,15 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("EnumDesignator visit", enumDesignator);
     }
 
-    public void visit(ArrayDesignator arrayDesignator) {
-        String name = arrayDesignator.getDesignatorName();
+    public void visit(ArrayName arrayName) {
+        String name = arrayName.getDesignatorName();
+        arrayName.obj = SymbolTable.find(name);
+    }
 
+    public void visit(ArrayDesignator arrayDesignator) {
         arrayDesignator.obj = SymbolTable.noObj;
 
-        Obj designatorObj = SymbolTable.find(name);
+        Obj designatorObj = arrayDesignator.getArrayName().obj;
         if (designatorObj == SymbolTable.noObj) {
             reportError("Symbol used but never defined", arrayDesignator);
             return;
@@ -630,7 +651,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             return;
         }
 
-        arrayDesignator.obj = designatorObj;
+        if (designatorObj.getType().getKind() != Struct.Array) {
+            reportError("Non array symbol used as array name", arrayDesignator);
+            return;
+        }
+
+        arrayDesignator.obj = new Obj(designatorObj.getKind(), designatorObj.getName(), designatorObj.getType().getElemType());
 
         print_info("ArrayDesignator visit", arrayDesignator);
     }
@@ -659,6 +685,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     public void visit(ActualParametar actualParametar) {
         Expr expr = actualParametar.getExpr();
         Struct type = expr.struct;
+
+        if (type == null) {
+            reportError("Type of actual parameter is null", actualParametar);
+            return;
+        }
 
         if (!actualParametersBuffer.insertActualParameter(type)) {
             reportError("Actual Parameter Processing but method start not found", actualParametar);
@@ -699,6 +730,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
         if (actualParametersList.size() != formalParsNumber) {
             reportError("Wrong number of parameters", methodCall);
+            return;
         }
 
         Collection<Obj> formalParameters = designatorObj.getLocalSymbols();
@@ -708,7 +740,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
             Struct type = currentParameter.getType();
             if (!actualParametersList.get(i).assignableTo(type)) {
-                reportError("Actual parameter at position " + i + " has wrong type", methodCall);
+                reportError("Actual parameter at position " + (i + 1) + " has wrong type", methodCall);
             }
             i++;
         }

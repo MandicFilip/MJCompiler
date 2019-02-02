@@ -8,6 +8,7 @@
                 <exclude name="SemanticAnalyzer.java"/>
                 <exclude name="SymbolTable.java"/>
                 <exclude name="ActualParametersBuffer.java"/>
+                <exclude name="CodeGenerator.java"/>
             </fileset>
         </delete>
         <delete>
