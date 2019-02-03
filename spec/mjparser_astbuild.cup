@@ -372,7 +372,7 @@ Addop ::= (PlusOp) PLUS {: RESULT=new PlusOp(); :}
           (MinusOp) MINUS {: RESULT=new MinusOp(); :}
           ;
 
-MulOp ::= (MulOp) MUL {: RESULT=new MulOp(); :}
+MulOp ::= (MulOper) MUL {: RESULT=new MulOper(); :}
           |
           (DivOp) DIV {: RESULT=new DivOp(); :}
           |

@@ -37,7 +37,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     private Logger logger = Logger.getLogger(getClass());
     //----------------ERROR REPORT---------------------------------------------
 
-    void reportError(String message, SyntaxNode node) {
+    private void reportError(String message, SyntaxNode node) {
         errorsInCode = true;
         print_error(message, node);
     }
@@ -48,20 +48,20 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //----------------ERROR REPORT---------------------------------------------
 
-    void print_error(String message, SyntaxNode node) {
+    private void print_error(String message, SyntaxNode node) {
         StringBuilder builder = new StringBuilder(message);
         int line = (node == null) ? 0 : node.getLine();
         if (line != 0) {
-            builder.append(" on line " + line);
+            builder.append(" on line ").append(line);
         }
         logger.error(builder.toString());
     }
 
-    void print_info(String message, SyntaxNode node) {
+    private void print_info(String message, SyntaxNode node) {
         StringBuilder builder = new StringBuilder(message);
         int line = (node == null) ? 0 : node.getLine();
         if (line != 0) {
-            builder.append(" on line " + line);
+            builder.append(" on line ").append(line);
         }
         logger.info(builder.toString());
     }
@@ -115,6 +115,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //--------------------PROGRAM----------------------------------------------
 
+    @Override
     public void visit(Program program) {
         if (!isMainDefined) {
             reportError("main method is not defined", program);
@@ -138,6 +139,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("Program visit", program);
     }
 
+    @Override
     public void visit(ProgName progName) {
         progName.obj = SymbolTable.insert(Obj.Prog, progName.getPName(), SymbolTable.noType);
         SymbolTable.openScope();
@@ -147,6 +149,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //-----------------------Type----------------------------------------------
 
+    @Override
     public void visit(Type type) {
         String typeName = type.getTName();
 
@@ -170,6 +173,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //----------------------CONST----------------------------------------------
 
+    @Override
     public void visit(ConstDecl constDecl) {
         if (currentTypeObj == SymbolTable.noObj) {
             reportError("Const type is not correct", constDecl);
@@ -220,6 +224,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //-----------------------VARIABLE------------------------------------------
 
+    @Override
     public void visit(VarDeclaration varDecl) {
 
         if (currentTypeObj == SymbolTable.noObj) {
@@ -250,6 +255,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //-----------------------ENUM----------------------------------------------
 
+    @Override
     public void visit(EnumDecl enumDecl) {
         SymbolTable.chainLocalSymbols(enumDecl.getEnumStart().obj);
         SymbolTable.closeScope();
@@ -257,6 +263,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("EnumDecl visit", enumDecl);
     }
 
+    @Override
     public void visit(EnumStart enumStart) {
         enumStart.obj = SymbolTable.insert(Obj.Type, enumStart.getEName(), SymbolTable.enumType);
         SymbolTable.openScope();
@@ -266,6 +273,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("EnumStart visit", enumStart);
     }
 
+    @Override
     public void visit(EnumMember enumMember) {
         String enumName = enumMember.getEnumMemberName();
         if (isDefinedInCurrentScope(enumName) || isEnumAndVarWithSameName(enumName)) {
@@ -293,6 +301,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //--------------------METHODS----------------------------------------------
 
+    @Override
     public void visit(MethodDecl methodDecl) {
 
         if (currentMethod == SymbolTable.noObj) {
@@ -322,6 +331,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("MethodDecl visit", methodDecl);
     }
 
+    @Override
     public void visit(MethodStart methodStart) {
         String methodName = methodStart.getMethodName();
         isMethodValid = true;
@@ -362,12 +372,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     }
 
     //this can't be done in method declaration because params are needed for recursion
+    @Override
     public void visit(FormParams formParams) {
         currentMethod.setLocals(SymbolTable.currentScope().getLocals());
 
         print_info("FormParams visit", formParams);
     }
 
+    @Override
     public void visit(FormPara formPara) {
         String formParaName = formPara.getParamName();
 
@@ -395,6 +407,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //-----------------------STATEMENTS----------------------------------------
 
+    @Override
     public void visit(ContinueStatement continueStatement) {
         if (forLevel == 0) {
             reportError("Continue statement found outside of loop", continueStatement);
@@ -403,6 +416,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("ContinueStatement visit", continueStatement);
     }
 
+    @Override
     public void visit(BreakStatement breakStatement) {
         if (forLevel == 0) {
             reportError("Break statement found outside of loop", breakStatement);
@@ -411,6 +425,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("BreakStatement visit", breakStatement);
     }
 
+    @Override
     public void visit(ReturnExpStatement returnExpStatement) {
         if (currentMethod == SymbolTable.noObj) {
             reportError("Return statement found, but not in function", returnExpStatement);
@@ -421,10 +436,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
         Struct retType = returnExpStatement.getExpr().struct;
 
-//        if (retType.getKind() == Struct.Array) {
-//            retType = retType.getElemType();
-//        }
-
         Struct methodType = currentMethod.getType();
 
         if (retType != methodType) {
@@ -434,6 +445,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("ReturnExpStatement visit", returnExpStatement);
     }
 
+    @Override
     public void visit(ReadStatement readStatement) {
         Obj designatorObj = readStatement.getDesignator().obj;
         Struct type = designatorObj.getType();
@@ -449,6 +461,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("ReadStatement visit", readStatement);
     }
 
+    @Override
     public void visit(PrintStatement printStatement) {
         ExpressionToPrint ex = printStatement.getExpressionToPrint();
         Struct type;
@@ -465,11 +478,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("PrintStatement visit", printStatement);
     }
 
+    @Override
     public void visit(IfStart ifStart) {
         ifLevel++;
         print_info("IfStart visit", ifStart);
     }
 
+    @Override
     public void visit(IfStatement ifStatement) {
         ifLevel--;
 
@@ -480,6 +495,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("IfStatement visit", ifStatement);
     }
 
+    @Override
     public void visit(IfElseStatement ifElseStatement) {
         ifLevel--;
 
@@ -489,6 +505,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("IfElseStatement visit", ifElseStatement);
     }
 
+    @Override
     public void visit(ForStart forStart) {
 
         forLevel++;
@@ -496,6 +513,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("ForStart visit", forStart);
     }
 
+    @Override
     public void visit(ForStatement forStatement) {
         forLevel--;
 
@@ -508,6 +526,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //-----------------------DESIGNATOR STATEMENTS-----------------------------
 
+    @Override
     public void visit(AssignDesignatorStatement assignDesignatorStatement) {
         Obj designatorObj = assignDesignatorStatement.getDesignator().obj;
 
@@ -523,16 +542,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         Struct leftSideType = designatorObj.getType();
         Struct rightSideType = assignDesignatorStatement.getExpr().struct;
 
-//        if ((leftSideType.getKind() != Struct.Array) &&
-//                (leftSideType != SymbolTable.nullType) && (rightSideType.getKind() == Struct.Array)) {
-//            rightSideType = rightSideType.getElemType();
-//        }
-//
-//        if ((leftSideType.getKind() == Struct.Array) &&
-//                (rightSideType.getKind() != Struct.Array) && (leftSideType != SymbolTable.nullType) ) {
-//            leftSideType = leftSideType.getElemType();
-//        }
-
         if (!leftSideType.assignableTo(rightSideType)) {
             reportError("Right side can't be assigned to left", assignDesignatorStatement);
         }
@@ -541,10 +550,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("AssignDesignatorStatement visit", assignDesignatorStatement);
     }
 
+    @Override
     public void visit(MethodCallStatement methodCallStatement) {
         //done in MethodCall visit
     }
 
+    @Override
     public void visit(IncDesignatorStatement incDesignatorStatement) {
         Obj designatorObj = incDesignatorStatement.getDesignator().obj;
 
@@ -566,6 +577,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("IncDesignatorStatement visit", incDesignatorStatement);
     }
 
+    @Override
     public void visit(DecDesignatorStatement decDesignatorStatement) {
         Obj designatorObj = decDesignatorStatement.getDesignator().obj;
 
@@ -589,6 +601,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //-----------------------DESIGNATORS---------------------------------------
 
+    @Override
     public void visit(EnumDesignator enumDesignator) {
         String name = enumDesignator.getDesignatorName();
 
@@ -627,11 +640,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("EnumDesignator visit", enumDesignator);
     }
 
+    @Override
     public void visit(ArrayName arrayName) {
         String name = arrayName.getDesignatorName();
         arrayName.obj = SymbolTable.find(name);
     }
 
+    @Override
     public void visit(ArrayDesignator arrayDesignator) {
         arrayDesignator.obj = SymbolTable.noObj;
 
@@ -656,11 +671,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             return;
         }
 
-        arrayDesignator.obj = new Obj(designatorObj.getKind(), designatorObj.getName(), designatorObj.getType().getElemType());
+        arrayDesignator.obj = new Obj(Obj.Elem, designatorObj.getName(), designatorObj.getType().getElemType());
 
         print_info("ArrayDesignator visit", arrayDesignator);
     }
 
+    @Override
     public void visit(SimpleDesignator simpleDesignator) {
         String name = simpleDesignator.getDesignatorName();
 
@@ -674,6 +690,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //-----------------------ACTUAL PARAMETERS---------------------------------
 
+    @Override
     public void visit(MethodCallStart methodCallStart) {
         methodCallStart.obj = methodCallStart.getDesignator().obj;
 
@@ -682,6 +699,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("MethodCallStart visit", methodCallStart);
     }
 
+    @Override
     public void visit(ActualParametar actualParametar) {
         Expr expr = actualParametar.getExpr();
         Struct type = expr.struct;
@@ -698,6 +716,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("ActualParametar", actualParametar);
     }
 
+    @Override
     public void visit(MethodCall methodCall) {
         Designator designator = methodCall.getMethodCallStart().getDesignator();
         Obj designatorObj = designator.obj;
@@ -750,6 +769,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //---------------------CONDITIONS------------------------------------------
 
+    @Override
     public void visit(ConditionFactor conditionFactor) {
         Struct type = conditionFactor.getExpr().struct;
         if (type.getKind() == Struct.Array) {
@@ -768,12 +788,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("ConditionFactor visit", conditionFactor);
     }
 
+    @Override
     public void visit(SingleCondFact singleCondFact) {
         singleCondFact.struct = singleCondFact.getExpr().struct;
 
         print_info("SingleCondFact visit", singleCondFact);
     }
 
+    @Override
     public void visit(SingleCondFactTerm singleCondFactTerm) {
         if (singleCondFactTerm.getCondFact().struct != SymbolTable.boolType) {
             reportError("Condition terminal is not boolean", singleCondFactTerm);
@@ -783,6 +805,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("SingleCondFactTerm visit", singleCondFactTerm);
     }
 
+    @Override
     public void visit(CondFactListTerm condFactListTerm) {
         Struct leftType = condFactListTerm.getCondTerm().struct;
         Struct rightType = condFactListTerm.getCondFact().struct;
@@ -794,12 +817,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("CondFactListTerm visit", condFactListTerm);
     }
 
+    @Override
     public void visit(SingleTermCondition singleTermCondition) {
         singleTermCondition.struct = singleTermCondition.getCondTerm().struct;
 
         print_info("SingleTermCondition visit", singleTermCondition);
     }
 
+    @Override
     public void visit(TermListCondition termListCondition) {
         Struct leftType = termListCondition.getConditionDecl().struct;
         Struct rightType = termListCondition.getCondTerm().struct;
@@ -813,6 +838,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     //---------------------EXPRESSIONS-----------------------------------------
 
+    @Override
     public void visit(TermListExpr termListExpr) {
         Struct leftType = termListExpr.getExpr().struct;
         Struct rightType = termListExpr.getTerm().struct;
@@ -825,12 +851,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("TermListExpr visit", termListExpr);
     }
 
+    @Override
     public void visit(SingleTermExpr singleTermExpr) {
         singleTermExpr.struct = singleTermExpr.getSignTerm().struct;
 
         print_info("SingleTermExpr visit", singleTermExpr);
     }
 
+    @Override
     public void visit(MinusTerm minusTerm) {
         if (minusTerm.getTerm().struct != SymbolTable.intType) {
             reportError("Minus operator used on non int term", minusTerm);
@@ -840,12 +868,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("MinusTerm visit", minusTerm);
     }
 
+    @Override
     public void visit(NoSignTerm noSignTerm) {
         noSignTerm.struct = noSignTerm.getTerm().struct;
 
         print_info("NoSignTerm visit", noSignTerm);
     }
 
+    @Override
     public void visit(FactorListTerm factorListTerm) {
         Struct leftType = factorListTerm.getTerm().struct;
         Struct rightType = factorListTerm.getFactor().struct;
@@ -858,36 +888,42 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("FactorListTerm visit", factorListTerm);
     }
 
+    @Override
     public void visit(SingleFactorTerm singleFactorTerm) {
         singleFactorTerm.struct = singleFactorTerm.getFactor().struct;
 
         print_info("SingleFactorTerm visit", singleFactorTerm);
     }
 
+    @Override
     public void visit(ParenFactor parenFactor) {
         parenFactor.struct = parenFactor.getExpr().struct;
 
         print_info("ParenFactor visit", parenFactor);
     }
 
+    @Override
     public void visit(NumberFactor numberFactor) {
         numberFactor.struct = SymbolTable.intType;
 
         print_info("NumberFactor visit", numberFactor);
     }
 
+    @Override
     public void visit(CharFactor charFactor) {
         charFactor.struct = SymbolTable.charType;
 
         print_info("CharFactor visit", charFactor);
     }
 
+    @Override
     public void visit(BoolFactor boolFactor) {
         boolFactor.struct = SymbolTable.boolType;
 
         print_info("BoolFactor visit", boolFactor);
     }
 
+    @Override
     public void visit(NewTypeFactor newTypeFactor) {
         newTypeFactor.struct = new Struct(Struct.Array, newTypeFactor.getType().struct);
         if (newTypeFactor.getExpr().struct != SymbolTable.intType) {
@@ -897,12 +933,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_info("NewTypeFactor visit", newTypeFactor);
     }
 
+    @Override
     public void visit(DesignatorFactor designatorFactor) {
         designatorFactor.struct = designatorFactor.getDesignator().obj.getType();
 
         print_info("DesignatorFactor visit", designatorFactor);
     }
 
+    @Override
     public void visit(FunCallFactor funCallFactor) {
         funCallFactor.struct = funCallFactor.getMethodCall().getMethodCallStart().getDesignator().obj.getType();
 
