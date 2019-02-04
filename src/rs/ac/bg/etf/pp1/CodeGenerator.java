@@ -1,18 +1,20 @@
 package rs.ac.bg.etf.pp1;
 
+import org.apache.log4j.Logger;
 import rs.ac.bg.etf.pp1.ast.*;
 import rs.etf.pp1.mj.runtime.Code;
 import rs.etf.pp1.symboltable.concepts.Obj;
 import rs.etf.pp1.symboltable.concepts.Struct;
-import sun.security.krb5.internal.crypto.Des;
-
-import java.util.Collection;
 
 public class CodeGenerator extends VisitorAdaptor {
     private int mainPC;
 
     private static final int trueValue = 1;
     private static final int falseValue = 0;
+
+    private JumpAddressStack jumpAddressStack = new JumpAddressStack();
+
+    private Logger logger = Logger.getLogger(getClass());
 
     public int getMainPC() {
         return mainPC;
@@ -421,27 +423,83 @@ public class CodeGenerator extends VisitorAdaptor {
 
     @Override
     public void visit(IfStart ifStart) {
+        //takes condition value from stack
 
+        Code.loadConst(trueValue);
+        Code.put(Code.jcc + Code.eq);
+        Code.put(8);
+        Code.put(Code.jmp);
+
+        int addressToPatch = Code.pc;
+        jumpAddressStack.pushIfConditionAddressToPatch(addressToPatch);
+
+        Code.put(0); //needs patch - ELSE or IF end
+
+        //leaves nothing on stack
     }
 
     @Override
     public void visit(IfStatement ifStatement) {
+        //takes nothing from stack
 
+        int currentAddress = Code.pc;
+        int addressToPatch = jumpAddressStack.popIfConditionAddressToPatch(); //IF START DID PUSH
+
+        if (addressToPatch == -1) {
+            logger.error("RUNTIME ERROR - SHOULD PATCH IN IF-STATEMENT, BUT NO ADDRESS TO PATCH");
+        }
+
+
+        Code.put2(addressToPatch, currentAddress);
+
+        //leaves nothing on stack
     }
 
     @Override
     public void visit(IfElseStatement ifElseStatement) {
+        //takes nothing from stack
 
+        int currentAddress = Code.pc;
+        int addressToPatch = jumpAddressStack.popIfConditionAddressToPatch(); //ELSE PART DID PUSH
+
+        if (addressToPatch == -1) {
+            logger.error("RUNTIME ERROR - SHOULD PATCH IN IF-ELSE-STATEMENT, BUT NO ADDRESS TO PATCH");
+        }
+
+        Code.put2(addressToPatch, currentAddress);
+
+        //leaves nothing on stack
     }
 
     @Override
     public void visit(ElsePart elsePart) {
+        //insert jmp to jump over else
+        Code.put(Code.jmp);
 
+        int newAddressToPatch = Code.pc;
+
+        Code.put(0);  //needs PATCH - IF end
+
+        int currentAddress = Code.pc;
+        int addressToPatchOld = jumpAddressStack.popIfConditionAddressToPatch(); //IF START PART DID PUSH
+
+        if (addressToPatchOld == -1) {
+            logger.error("RUNTIME ERROR - SHOULD PATCH IN ELSE, BUT NO ADDRESS TO PATCH");
+
+        }  else Code.put2(addressToPatchOld, currentAddress);
+
+        jumpAddressStack.pushIfConditionAddressToPatch(newAddressToPatch);
     }
 
     //---------------FOR STATEMENTS------------
 
+    public void visit(ForStatement forStatement) {
 
+    }
+
+    public void visit(OptCondition optCondition) {
+
+    }
 
     //---------------IO STATEMENTS-------------
 
