@@ -11,6 +11,9 @@ import java.util.Collection;
 public class CodeGenerator extends VisitorAdaptor {
     private int mainPC;
 
+    private static final int trueValue = 1;
+    private static final int falseValue = 0;
+
     public int getMainPC() {
         return mainPC;
     }
@@ -56,6 +59,14 @@ public class CodeGenerator extends VisitorAdaptor {
         //no case for enum, enum members are const
     }
 
+    private int getRelOpCode(RelOp relOp) {
+        if (relOp instanceof Equal) return Code.eq;
+        if (relOp instanceof Unequal) return Code.ne;
+        if (relOp instanceof Greater) return Code.gt;
+        if (relOp instanceof GreaterEqual) return Code.ge;
+        if (relOp instanceof Smaller) return Code.lt;
+        return Code.le;
+    }
 
     //-------------------------VISIT METHODS-----------------------------------
 
@@ -295,6 +306,66 @@ public class CodeGenerator extends VisitorAdaptor {
         //leaves result on stack
     }
 
+    //-------------------------CONDITION EXPRESSION----------------------------
+
+    @Override
+    public void visit(TermListCondition termListCondition) {
+        //takes two bool values from stack
+
+        Code.put(Code.add);
+        Code.loadConst(0); //value to compare with
+        Code.put(Code.jcc + Code.gt);
+        Code.put(10);
+        Code.loadConst(falseValue);
+        Code.put(Code.jmp);
+        Code.put(6);
+        Code.loadConst(trueValue);
+
+        //leaves bool value on stack
+    }
+
+    @Override
+    public void visit(SingleTermCondition singleTermCondition) {
+        //takes nothing from stack
+        //leaves nothing on stack
+    }
+
+    @Override
+    public void visit(CondFactListTerm condFactListTerm) {
+        //takes two bool values from stack
+
+        Code.put(Code.mul);
+
+        //leaves bool value on stack
+    }
+
+    @Override
+    public void visit(SingleCondFactTerm singleCondFactTerm) {
+        //takes nothing from stack
+        //leaves nothing on stack
+    }
+
+    @Override
+    public void visit(ConditionFactor conditionFactor) {
+        //takes two expression values from stack
+        int relOpCode = getRelOpCode(conditionFactor.getRelOp());
+
+        Code.put(relOpCode);
+        Code.put(10);  //jmp offset
+        Code.loadConst(falseValue);
+        Code.put(Code.jmp);
+        Code.put(6); //jmp offset
+        Code.loadConst(trueValue);
+
+        //leaves bool value on stack
+    }
+
+    @Override
+    public void visit(SingleCondFact singleCondFact) {
+        //takes nothing from stack
+        //leaves nothing on stack
+    }
+
     //-------------------------DESIGNATOR STATEMENTS---------------------------
 
     @Override
@@ -345,6 +416,35 @@ public class CodeGenerator extends VisitorAdaptor {
     }
 
     //-------------------------------STATEMENTS--------------------------------
+
+    //---------------IF STATEMENTS-------------
+
+    @Override
+    public void visit(IfStart ifStart) {
+
+    }
+
+    @Override
+    public void visit(IfStatement ifStatement) {
+
+    }
+
+    @Override
+    public void visit(IfElseStatement ifElseStatement) {
+
+    }
+
+    @Override
+    public void visit(ElsePart elsePart) {
+
+    }
+
+    //---------------FOR STATEMENTS------------
+
+
+
+    //---------------IO STATEMENTS-------------
+
     @Override
     public void visit(ReadStatement readStatement) {
         //takes nothing from stack
@@ -370,6 +470,8 @@ public class CodeGenerator extends VisitorAdaptor {
         ExpressionToPrint ex = printStatement.getExpressionToPrint();
         Struct type;
         int printTimes = 1;
+        int printWidth = 0;
+        int loopStart = 0;
 
         if (ex instanceof ExpressionAndConstToPrint) {
             printTimes = ((ExpressionAndConstToPrint) ex).getValue();
@@ -378,13 +480,31 @@ public class CodeGenerator extends VisitorAdaptor {
         else type = ((OnlyExpressionToPrint) ex).getExpr().struct;
 
         if (type == SymbolTable.charType) {
-            Code.loadConst(1);
-            Code.put(Code.bprint);
+            printWidth = 1; //char print size
         } else {
-            Code.loadConst(5);
-            Code.put(Code.print);
+            printWidth = 5; //int print size
         }
-        //TODO generate code for multiple calls
+
+        if (printTimes == 1) {
+            Code.loadConst(printWidth);
+            Code.put(Code.print);
+
+        } else {
+            Code.loadConst(printTimes);
+
+            loopStart = Code.pc;
+
+            Code.loadConst(printWidth);
+            Code.put(Code.print);
+
+            Code.loadConst(1);
+            Code.put(Code.sub);
+            Code.put(Code.dup);
+            Code.loadConst(0);
+            Code.put(Code.jcc + Code.ne);
+            Code.put(loopStart);
+            Code.put(Code.pop);
+        }
 
         //leaves nothing on stack
     }

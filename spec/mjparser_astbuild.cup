@@ -93,6 +93,7 @@ nonterminal ExpressionToPrint ExpressionToPrint;
 nonterminal DesignatorStmt DesignatorStmt;
 nonterminal IfConditionForm IfConditionForm;
 nonterminal IfStart IfStart;
+nonterminal ElsePart ElsePart;
 nonterminal ForStart ForStart;
 nonterminal ActualPars ActualPars;
 nonterminal ActualParamList ActualParamList;
@@ -229,7 +230,7 @@ Statement ::= (DesignatorStatement) DesignatorStmt:D1 SEMI {: RESULT=new Designa
               |
 			  (IfStatement) IfStart:I1 Statement:S2 {: RESULT=new IfStatement(I1, S2); RESULT.setLine(I1left); :}
 			  |
-			  (IfElseStatement) IfStart:I1 Statement:S2 ELSE Statement:S3 {: RESULT=new IfElseStatement(I1, S2, S3); RESULT.setLine(I1left); :}
+			  (IfElseStatement) IfStart:I1 Statement:S2 ElsePart:E3 Statement:S4 {: RESULT=new IfElseStatement(I1, S2, E3, S4); RESULT.setLine(I1left); :}
 			  |
 			  (ForStatement) ForStart:F1 Statement:S2 {: RESULT=new ForStatement(F1, S2); RESULT.setLine(F1left); :}
 			  |
@@ -249,6 +250,8 @@ Statement ::= (DesignatorStatement) DesignatorStmt:D1 SEMI {: RESULT=new Designa
 			  ;
 
 IfStart ::= (IfStart) IF IfConditionForm:I1 {: RESULT=new IfStart(I1); RESULT.setLine(I1left); :};
+
+ElsePart ::= ELSE {: RESULT=new ElsePartDerived1(); :};
 
 ForStart ::= (ForStart) FOR LPAREN OptDesignatorStatement:O1 SEMI OptCondition:O2 SEMI OptDesignatorStatement:O3 RPAREN {: RESULT=new ForStart(O1, O2, O3); RESULT.setLine(O1left); :};
 
