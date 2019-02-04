@@ -61,9 +61,34 @@ public class CodeGenerator extends VisitorAdaptor {
 
     //-------------------------PROGRAM-----------------------------------------
 
+    @Override
     public void visit(ProgName progName) {
         //define global predefined methods
+        defineOrdCall();
+        defineChrCall();
+        defineLenCall();
+    }
 
+    private void defineOrdCall() {
+        Obj ordObj = SymbolTable.find("ord");
+        ordObj.setAdr(Code.pc);
+
+        Code.put(Code.return_);
+    }
+
+    private void defineChrCall() {
+        Obj chrObj = SymbolTable.find("chr");
+        chrObj.setAdr(Code.pc);
+
+        Code.put(Code.return_);
+    }
+
+    private void defineLenCall() {
+        Obj lenObj = SymbolTable.find("len");
+        lenObj.setAdr(Code.pc);
+
+        Code.put(Code.arraylength);
+        Code.put(Code.return_);
     }
 
     //-------------------------METHOD DECLARATION------------------------------
@@ -345,7 +370,6 @@ public class CodeGenerator extends VisitorAdaptor {
         ExpressionToPrint ex = printStatement.getExpressionToPrint();
         Struct type;
         int printTimes = 1;
-        int printWidth = 1;
 
         if (ex instanceof ExpressionAndConstToPrint) {
             printTimes = ((ExpressionAndConstToPrint) ex).getValue();
@@ -353,12 +377,13 @@ public class CodeGenerator extends VisitorAdaptor {
         }
         else type = ((OnlyExpressionToPrint) ex).getExpr().struct;
 
-        if (type == SymbolTable.intType) {
-            printWidth = 5; //???
+        if (type == SymbolTable.charType) {
+            Code.loadConst(1);
+            Code.put(Code.bprint);
+        } else {
+            Code.loadConst(5);
+            Code.put(Code.print);
         }
-
-        Code.loadConst(printWidth);
-        Code.put(Code.print);
         //TODO generate code for multiple calls
 
         //leaves nothing on stack

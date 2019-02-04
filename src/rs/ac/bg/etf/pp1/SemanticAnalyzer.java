@@ -42,8 +42,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         print_error(message, node);
     }
 
-    public static boolean isErrorsInCode() {
+    public boolean isErrorsInCode() {
         return errorsInCode;
+    }
+
+    public int getGlobal_variables_count() {
+        return global_variables_count;
     }
 
     //----------------ERROR REPORT---------------------------------------------
@@ -535,7 +539,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             return;
         }
 
-        if (designatorObj.getKind() != Obj.Var) {
+        if ((designatorObj.getKind() != Obj.Var) && (designatorObj.getKind() != Obj.Elem)) {
             reportError("Left side is not a variable", assignDesignatorStatement);
         }
 
