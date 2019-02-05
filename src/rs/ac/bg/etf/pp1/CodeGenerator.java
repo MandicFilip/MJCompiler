@@ -652,6 +652,7 @@ public class CodeGenerator extends VisitorAdaptor {
         int printTimes = 1;
         int printWidth = 5;
         int loopStart;
+        int print = Code.print;
 
         if (ex instanceof ExpressionAndConstToPrint) {
             printTimes = ((ExpressionAndConstToPrint) ex).getValue();
@@ -661,11 +662,12 @@ public class CodeGenerator extends VisitorAdaptor {
 
         if (type == SymbolTable.charType) {
             printWidth = 1; //char print size
+            print = Code.bprint;
         }
 
         if (printTimes == 1) {
             Code.loadConst(printWidth);
-            Code.put(Code.print);
+            Code.put(print);
 
         } else if (printTimes > 1) {
             Code.loadConst(printTimes);
@@ -675,7 +677,7 @@ public class CodeGenerator extends VisitorAdaptor {
             Code.put(Code.dup2);
             Code.put(Code.pop);
             Code.loadConst(printWidth);
-            Code.put(Code.print);
+            Code.put(print);
 
             Code.loadConst(1);
             Code.put(Code.sub);
