@@ -221,11 +221,16 @@ Statement ::= (DesignatorStatement) DesignatorStmt SEMI
 
 IfStart ::= (IfStart) IF IfConditionForm;
 
-ElsePart ::= ELSE;
+ElsePart ::= (ElsePart) ELSE;
 
 ForStart ::= (ForStart) FOR LPAREN FirstOptDesignator SEMI OptCondition SEMI SecondOptDesignator RPAREN;
 
 FirstOptDesignator ::= (FirstOptDesignator) OptDesignatorStatement;
+
+OptCondition::= (Condition) ConditionDecl
+                |
+                (NoCondition)
+                ;
 
 SecondOptDesignator ::= (SecondOptDesignator) OptDesignatorStatement;
 
@@ -239,11 +244,6 @@ IfConditionForm ::= (IfCondition) LPAREN ConditionDecl RPAREN
                     (ConditionError) LPAREN error RPAREN:l
                     {: parser.report_error("Bad condition at line " + lleft, null); :}
                     ;
-
-OptCondition::= (Condition) ConditionDecl
-                |
-                (NoCondition)
-                ;
 
 ExpressionToPrint ::= (OnlyExpressionToPrint) Expr:exprToPrint
                       |

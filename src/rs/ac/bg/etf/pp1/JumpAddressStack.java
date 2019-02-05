@@ -46,8 +46,9 @@ public class JumpAddressStack {
         int bodyStart;
         boolean noCondition = true;
 
-        ArrayList<Integer> breakAddressesToFix = new ArrayList<>();
-        ArrayList<Integer> continueAddressesToFix = new ArrayList<>();
+        ArrayList<Integer> forEndAddressesToPatch = new ArrayList<>();
+
+        int addressToFixBodyStart;
     }
 
     private Stack<ForConditionElement> forLoopStack;
@@ -100,24 +101,24 @@ public class JumpAddressStack {
         return tmp.noCondition;
     }
 
-    public void setBreakAddress(int address) {
+    public void addForEndAddressesToPatch(int address) {
         ForConditionElement tmp = forLoopStack.peek();
-        tmp.breakAddressesToFix.add(address);
+        tmp.forEndAddressesToPatch.add(address);
     }
 
-    public void setContinueAddress(int address) {
+    public ArrayList<Integer> getForEndAddressesToPatch() {
         ForConditionElement tmp = forLoopStack.peek();
-        tmp.continueAddressesToFix.add(address);
+        return tmp.forEndAddressesToPatch;
     }
 
-    public ArrayList<Integer> getBreakAddresses() {
+    public void setConditionToBodyStartAddressToPatch(int address) {
         ForConditionElement tmp = forLoopStack.peek();
-        return tmp.breakAddressesToFix;
+        tmp.addressToFixBodyStart = address;
     }
 
-    public ArrayList<Integer> getContinueAddresses() {
+    public int getConditionToBodyStartAddressToPatch() {
         ForConditionElement tmp = forLoopStack.peek();
-        return tmp.continueAddressesToFix;
+        return tmp.addressToFixBodyStart;
     }
 
 }

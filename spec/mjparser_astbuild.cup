@@ -87,6 +87,8 @@ nonterminal FormPara FormPara;
 nonterminal MethodDeclList MethodDeclList;
 nonterminal Statements Statements;
 nonterminal Statement Statement;
+nonterminal FirstOptDesignator FirstOptDesignator;
+nonterminal SecondOptDesignator SecondOptDesignator;
 nonterminal OptDesignatorStatement OptDesignatorStatement;
 nonterminal OptCondition OptCondition;
 nonterminal ExpressionToPrint ExpressionToPrint;
@@ -251,9 +253,18 @@ Statement ::= (DesignatorStatement) DesignatorStmt:D1 SEMI {: RESULT=new Designa
 
 IfStart ::= (IfStart) IF IfConditionForm:I1 {: RESULT=new IfStart(I1); RESULT.setLine(I1left); :};
 
-ElsePart ::= ELSE {: RESULT=new ElsePartDerived1(); :};
+ElsePart ::= (ElsePart) ELSE {: RESULT=new ElsePart(); :};
 
-ForStart ::= (ForStart) FOR LPAREN OptDesignatorStatement:O1 SEMI OptCondition:O2 SEMI OptDesignatorStatement:O3 RPAREN {: RESULT=new ForStart(O1, O2, O3); RESULT.setLine(O1left); :};
+ForStart ::= (ForStart) FOR LPAREN FirstOptDesignator:F1 SEMI OptCondition:O2 SEMI SecondOptDesignator:S3 RPAREN {: RESULT=new ForStart(F1, O2, S3); RESULT.setLine(F1left); :};
+
+FirstOptDesignator ::= (FirstOptDesignator) OptDesignatorStatement:O1 {: RESULT=new FirstOptDesignator(O1); RESULT.setLine(O1left); :};
+
+OptCondition::= (Condition) ConditionDecl:C1 {: RESULT=new Condition(C1); RESULT.setLine(C1left); :}
+                |
+                (NoCondition) {: RESULT=new NoCondition(); :}
+                ;
+
+SecondOptDesignator ::= (SecondOptDesignator) OptDesignatorStatement:O1 {: RESULT=new SecondOptDesignator(O1); RESULT.setLine(O1left); :};
 
 OptDesignatorStatement ::= (SingleDesignatorStatement) DesignatorStmt:D1 {: RESULT=new SingleDesignatorStatement(D1); RESULT.setLine(D1left); :}
                            |
@@ -265,11 +276,6 @@ IfConditionForm ::= (IfCondition) LPAREN ConditionDecl:C1 RPAREN {: RESULT=new I
                     (ConditionError) LPAREN error RPAREN:l
                     {: parser.report_error("Bad condition at line " + lleft, null); :} {: RESULT=new ConditionError(); :}
                     ;
-
-OptCondition::= (Condition) ConditionDecl:C1 {: RESULT=new Condition(C1); RESULT.setLine(C1left); :}
-                |
-                (NoCondition) {: RESULT=new NoCondition(); :}
-                ;
 
 ExpressionToPrint ::= (OnlyExpressionToPrint) Expr:exprToPrint {: RESULT=new OnlyExpressionToPrint(exprToPrint); RESULT.setLine(exprToPrintleft); :}
                       |

@@ -250,7 +250,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             SymbolTable.insert(Obj.Var, varName, currentTypeObj.getType());
         }
 
-        if (currentMethod != SymbolTable.noObj) global_variables_count++;
+        if (currentMethod == SymbolTable.noObj) global_variables_count++;
         else local_variables_count++;
 
         print_info("VarDecl visit", varDecl);

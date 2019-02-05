@@ -6,6 +6,8 @@ import rs.etf.pp1.mj.runtime.Code;
 import rs.etf.pp1.symboltable.concepts.Obj;
 import rs.etf.pp1.symboltable.concepts.Struct;
 
+import java.util.ArrayList;
+
 public class CodeGenerator extends VisitorAdaptor {
     private int mainPC;
 
@@ -13,6 +15,10 @@ public class CodeGenerator extends VisitorAdaptor {
     private static final int falseValue = 0;
 
     private JumpAddressStack jumpAddressStack = new JumpAddressStack();
+
+    private static final int TWO_JMP_OFFSET_SIZE = 6;
+    private static final int TWO_JMP_OFFSET_CONST_SIZE = 7;
+    private static final int JMP_OFFSET_CONST_SIZE =4;
 
     private Logger logger = Logger.getLogger(getClass());
 
@@ -68,6 +74,14 @@ public class CodeGenerator extends VisitorAdaptor {
         if (relOp instanceof GreaterEqual) return Code.ge;
         if (relOp instanceof Smaller) return Code.lt;
         return Code.le;
+    }
+
+    private boolean checkIfConditionExists(OptCondition optCondition) {
+        return optCondition instanceof Condition;
+    }
+
+    private boolean isSecondOptStatement(SecondOptDesignator secondOptDesignator) {
+        return secondOptDesignator.getOptDesignatorStatement() instanceof SingleDesignatorStatement;
     }
 
     //-------------------------VISIT METHODS-----------------------------------
@@ -317,10 +331,10 @@ public class CodeGenerator extends VisitorAdaptor {
         Code.put(Code.add);
         Code.loadConst(0); //value to compare with
         Code.put(Code.jcc + Code.gt);
-        Code.put(10);
+        Code.put2(TWO_JMP_OFFSET_CONST_SIZE); //offset 8 = loadconst, put, put2 sizes
         Code.loadConst(falseValue);
         Code.put(Code.jmp);
-        Code.put(6);
+        Code.put2(JMP_OFFSET_CONST_SIZE);
         Code.loadConst(trueValue);
 
         //leaves bool value on stack
@@ -352,11 +366,11 @@ public class CodeGenerator extends VisitorAdaptor {
         //takes two expression values from stack
         int relOpCode = getRelOpCode(conditionFactor.getRelOp());
 
-        Code.put(relOpCode);
-        Code.put(10);  //jmp offset
+        Code.put(Code.jcc + relOpCode);
+        Code.put2(TWO_JMP_OFFSET_CONST_SIZE);  //jmp offset
         Code.loadConst(falseValue);
         Code.put(Code.jmp);
-        Code.put(6); //jmp offset
+        Code.put2(JMP_OFFSET_CONST_SIZE); //jmp offset
         Code.loadConst(trueValue);
 
         //leaves bool value on stack
@@ -427,13 +441,13 @@ public class CodeGenerator extends VisitorAdaptor {
 
         Code.loadConst(trueValue);
         Code.put(Code.jcc + Code.eq);
-        Code.put(8);
+        Code.put2(TWO_JMP_OFFSET_SIZE);
         Code.put(Code.jmp);
 
         int addressToPatch = Code.pc;
         jumpAddressStack.pushIfConditionAddressToPatch(addressToPatch);
 
-        Code.put(0); //needs patch - ELSE or IF end
+        Code.put2(0); //needs patch - ELSE or IF end
 
         //leaves nothing on stack
     }
@@ -449,8 +463,8 @@ public class CodeGenerator extends VisitorAdaptor {
             logger.error("RUNTIME ERROR - SHOULD PATCH IN IF-STATEMENT, BUT NO ADDRESS TO PATCH");
         }
 
-
-        Code.put2(addressToPatch, currentAddress);
+        //add 1 for jmp instruction code
+        Code.put2(addressToPatch, currentAddress - addressToPatch + 1);
 
         //leaves nothing on stack
     }
@@ -466,7 +480,8 @@ public class CodeGenerator extends VisitorAdaptor {
             logger.error("RUNTIME ERROR - SHOULD PATCH IN IF-ELSE-STATEMENT, BUT NO ADDRESS TO PATCH");
         }
 
-        Code.put2(addressToPatch, currentAddress);
+        //add 1 for jmp instruction code
+        Code.put2(addressToPatch, currentAddress - addressToPatch + 1);
 
         //leaves nothing on stack
     }
@@ -478,7 +493,7 @@ public class CodeGenerator extends VisitorAdaptor {
 
         int newAddressToPatch = Code.pc;
 
-        Code.put(0);  //needs PATCH - IF end
+        Code.put2(0);  //needs PATCH - IF end
 
         int currentAddress = Code.pc;
         int addressToPatchOld = jumpAddressStack.popIfConditionAddressToPatch(); //IF START PART DID PUSH
@@ -486,19 +501,126 @@ public class CodeGenerator extends VisitorAdaptor {
         if (addressToPatchOld == -1) {
             logger.error("RUNTIME ERROR - SHOULD PATCH IN ELSE, BUT NO ADDRESS TO PATCH");
 
-        }  else Code.put2(addressToPatchOld, currentAddress);
+            //add 1 for jmp instruction code
+        }  else Code.put2(addressToPatchOld, currentAddress - addressToPatchOld + 1);
 
         jumpAddressStack.pushIfConditionAddressToPatch(newAddressToPatch);
     }
 
     //---------------FOR STATEMENTS------------
 
+    @Override
     public void visit(ForStatement forStatement) {
+        //takes nothing from stack
+
+        int iteratorStatementStart = jumpAddressStack.getIteratorStatementStart();
+
+        Code.put(Code.jmp);
+        Code.put(iteratorStatementStart - Code.pc + 2);  //!
+
+        ArrayList<Integer> list = jumpAddressStack.getForEndAddressesToPatch();
+        for (Integer addressToPatch : list) {
+            Code.put2(addressToPatch, Code.pc - addressToPatch);
+        }
+
+        jumpAddressStack.popFor();
+
+        //leaves nothing on stack
+    }
+
+    @Override
+    public void visit(FirstOptDesignator firstOptDesignator) {
+        //takes nothing from stack
+
+        jumpAddressStack.pushFor();
+        jumpAddressStack.setConditionStart(Code.pc);
+
+        //leaves nothing on stack
+    }
+
+    @Override
+    public void visit(OptCondition optCondition) {
+        //takes condition result from stack
+
+        boolean hasCondition = checkIfConditionExists(optCondition);
+        if (hasCondition) {
+            Code.loadConst(trueValue);
+
+            Code.put(Code.jcc + Code.ne);
+            jumpAddressStack.addForEndAddressesToPatch(Code.pc);
+
+            Code.put(0);  //needs patch - END
+
+
+            Code.put(Code.jmp);
+            jumpAddressStack.setConditionToBodyStartAddressToPatch(Code.pc);
+            Code.put(0);  //needs patch - body start
+        } else {
+            Code.put(Code.jmp);
+            jumpAddressStack.setConditionToBodyStartAddressToPatch(Code.pc);
+            Code.put(0); //needs patch - body start
+        }
+
+        jumpAddressStack.setIteratorStatementStart(Code.pc);
+
+        //leaves nothing on stack
 
     }
 
-    public void visit(OptCondition optCondition) {
+    @Override
+    public void visit(SecondOptDesignator secondOptDesignator) {
+        //takes nothing from stack
 
+        boolean hasSecondOptStatement = isSecondOptStatement(secondOptDesignator);
+
+        //optimization
+        if (hasSecondOptStatement) {
+
+            int conditionStart = jumpAddressStack.getConditionStart();
+
+            Code.put(Code.jmp);
+            Code.put(conditionStart - Code.pc + 2); //!
+
+        } else {
+            jumpAddressStack.setIteratorStatementStart(jumpAddressStack.getConditionStart());
+        }
+
+
+        int bodyStartAddress = Code.pc;
+        jumpAddressStack.setBodyStart(bodyStartAddress);
+
+        //fix body start jmp in condition
+        int addressToPatch = jumpAddressStack.getConditionToBodyStartAddressToPatch();
+        Code.put2(addressToPatch, bodyStartAddress - addressToPatch);
+
+        //leaves nothing on stack
+    }
+
+    @Override
+    public void visit(BreakStatement breakStatement) {
+        //takes nothing from stack
+
+        Code.put(Code.jmp);
+
+        int addressToPatch = Code.pc;
+
+        Code.put(0);  //needs patch
+
+        jumpAddressStack.addForEndAddressesToPatch(addressToPatch);
+
+        //leaves nothing on stack
+    }
+
+    @Override
+    public void visit(ContinueStatement continueStatement) {
+        //takes nothing from stack
+
+        int iteratorStatementAddress = jumpAddressStack.getIteratorStatementStart();
+
+        Code.put(Code.jmp);
+        Code.put(iteratorStatementAddress - Code.pc + 2);  //needs patch !
+
+        //leaves nothing on stack
     }
 
     //---------------IO STATEMENTS-------------
@@ -560,7 +682,7 @@ public class CodeGenerator extends VisitorAdaptor {
             Code.put(Code.dup);
             Code.loadConst(0);
             Code.put(Code.jcc + Code.ne);
-            Code.put(loopStart);
+            Code.put(loopStart - Code.pc);
             Code.put(Code.pop);
         }
 
