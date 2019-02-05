@@ -97,6 +97,7 @@ nonterminal IfConditionForm IfConditionForm;
 nonterminal IfStart IfStart;
 nonterminal ElsePart ElsePart;
 nonterminal ForStart ForStart;
+nonterminal ForOptCondition ForOptCondition;
 nonterminal ActualPars ActualPars;
 nonterminal ActualParamList ActualParamList;
 nonterminal ActualParametar ActualParametar;
@@ -255,9 +256,11 @@ IfStart ::= (IfStart) IF IfConditionForm:I1 {: RESULT=new IfStart(I1); RESULT.se
 
 ElsePart ::= (ElsePart) ELSE {: RESULT=new ElsePart(); :};
 
-ForStart ::= (ForStart) FOR LPAREN FirstOptDesignator:F1 SEMI OptCondition:O2 SEMI SecondOptDesignator:S3 RPAREN {: RESULT=new ForStart(F1, O2, S3); RESULT.setLine(F1left); :};
+ForStart ::= (ForStart) FOR LPAREN FirstOptDesignator:F1 SEMI ForOptCondition:F2 SEMI SecondOptDesignator:S3 RPAREN {: RESULT=new ForStart(F1, F2, S3); RESULT.setLine(F1left); :};
 
 FirstOptDesignator ::= (FirstOptDesignator) OptDesignatorStatement:O1 {: RESULT=new FirstOptDesignator(O1); RESULT.setLine(O1left); :};
+
+ForOptCondition ::= (ForOptCondition) OptCondition:O1 {: RESULT=new ForOptCondition(O1); RESULT.setLine(O1left); :};
 
 OptCondition::= (Condition) ConditionDecl:C1 {: RESULT=new Condition(C1); RESULT.setLine(C1left); :}
                 |

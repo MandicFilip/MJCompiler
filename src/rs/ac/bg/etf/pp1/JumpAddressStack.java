@@ -44,7 +44,6 @@ public class JumpAddressStack {
         int conditionStart;
         int iteratorStatementStart;
         int bodyStart;
-        boolean noCondition = true;
 
         ArrayList<Integer> forEndAddressesToPatch = new ArrayList<>();
 
@@ -76,11 +75,6 @@ public class JumpAddressStack {
         tmp.bodyStart = bodyStart;
     }
 
-    public void setNoCondition(boolean noCondition) {
-        ForConditionElement tmp = forLoopStack.peek();
-        tmp.noCondition = noCondition;
-    }
-
     public int getConditionStart() {
         ForConditionElement tmp = forLoopStack.peek();
         return tmp.conditionStart;
@@ -94,11 +88,6 @@ public class JumpAddressStack {
     public int getBodyStart() {
         ForConditionElement tmp = forLoopStack.peek();
         return tmp.bodyStart;
-    }
-
-    public boolean isNoCondition() {
-        ForConditionElement tmp = forLoopStack.peek();
-        return tmp.noCondition;
     }
 
     public void addForEndAddressesToPatch(int address) {

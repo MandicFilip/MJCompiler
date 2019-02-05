@@ -516,11 +516,11 @@ public class CodeGenerator extends VisitorAdaptor {
         int iteratorStatementStart = jumpAddressStack.getIteratorStatementStart();
 
         Code.put(Code.jmp);
-        Code.put(iteratorStatementStart - Code.pc + 2);  //!
+        Code.put2(iteratorStatementStart - Code.pc + 1);  //!
 
         ArrayList<Integer> list = jumpAddressStack.getForEndAddressesToPatch();
         for (Integer addressToPatch : list) {
-            Code.put2(addressToPatch, Code.pc - addressToPatch);
+            Code.put2(addressToPatch, Code.pc - addressToPatch + 1);
         }
 
         jumpAddressStack.popFor();
@@ -539,26 +539,26 @@ public class CodeGenerator extends VisitorAdaptor {
     }
 
     @Override
-    public void visit(OptCondition optCondition) {
+    public void visit(ForOptCondition forOptCondition) {
         //takes condition result from stack
 
-        boolean hasCondition = checkIfConditionExists(optCondition);
+        boolean hasCondition = checkIfConditionExists(forOptCondition.getOptCondition());
         if (hasCondition) {
             Code.loadConst(trueValue);
 
             Code.put(Code.jcc + Code.ne);
             jumpAddressStack.addForEndAddressesToPatch(Code.pc);
 
-            Code.put(0);  //needs patch - END
+            Code.put2(0);  //needs patch - END
 
 
             Code.put(Code.jmp);
             jumpAddressStack.setConditionToBodyStartAddressToPatch(Code.pc);
-            Code.put(0);  //needs patch - body start
+            Code.put2(0);  //needs patch - body start
         } else {
             Code.put(Code.jmp);
             jumpAddressStack.setConditionToBodyStartAddressToPatch(Code.pc);
-            Code.put(0); //needs patch - body start
+            Code.put2(0); //needs patch - body start
         }
 
         jumpAddressStack.setIteratorStatementStart(Code.pc);
@@ -579,7 +579,7 @@ public class CodeGenerator extends VisitorAdaptor {
             int conditionStart = jumpAddressStack.getConditionStart();
 
             Code.put(Code.jmp);
-            Code.put(conditionStart - Code.pc + 2); //!
+            Code.put2(conditionStart - Code.pc + 1); //!
 
         } else {
             jumpAddressStack.setIteratorStatementStart(jumpAddressStack.getConditionStart());
@@ -591,7 +591,7 @@ public class CodeGenerator extends VisitorAdaptor {
 
         //fix body start jmp in condition
         int addressToPatch = jumpAddressStack.getConditionToBodyStartAddressToPatch();
-        Code.put2(addressToPatch, bodyStartAddress - addressToPatch);
+        Code.put2(addressToPatch, bodyStartAddress - addressToPatch + 1);
 
         //leaves nothing on stack
     }
@@ -604,7 +604,7 @@ public class CodeGenerator extends VisitorAdaptor {
 
         int addressToPatch = Code.pc;
 
-        Code.put(0);  //needs patch
+        Code.put2(0);  //needs patch
 
         jumpAddressStack.addForEndAddressesToPatch(addressToPatch);
 
@@ -618,7 +618,7 @@ public class CodeGenerator extends VisitorAdaptor {
         int iteratorStatementAddress = jumpAddressStack.getIteratorStatementStart();
 
         Code.put(Code.jmp);
-        Code.put(iteratorStatementAddress - Code.pc + 2);  //needs patch !
+        Code.put2(iteratorStatementAddress - Code.pc + 1);
 
         //leaves nothing on stack
     }
@@ -643,15 +643,15 @@ public class CodeGenerator extends VisitorAdaptor {
 
     @Override
     public void visit(PrintStatement printStatement) {
-        //takes nothing from stack
+        //takes value to print from stack
 
         super.visit(printStatement);
 
         ExpressionToPrint ex = printStatement.getExpressionToPrint();
         Struct type;
         int printTimes = 1;
-        int printWidth = 0;
-        int loopStart = 0;
+        int printWidth = 5;
+        int loopStart;
 
         if (ex instanceof ExpressionAndConstToPrint) {
             printTimes = ((ExpressionAndConstToPrint) ex).getValue();
@@ -661,28 +661,31 @@ public class CodeGenerator extends VisitorAdaptor {
 
         if (type == SymbolTable.charType) {
             printWidth = 1; //char print size
-        } else {
-            printWidth = 5; //int print size
         }
 
         if (printTimes == 1) {
             Code.loadConst(printWidth);
             Code.put(Code.print);
 
-        } else {
+        } else if (printTimes > 1) {
             Code.loadConst(printTimes);
 
             loopStart = Code.pc;
 
+            Code.put(Code.dup2);
+            Code.put(Code.pop);
             Code.loadConst(printWidth);
             Code.put(Code.print);
 
             Code.loadConst(1);
             Code.put(Code.sub);
+
             Code.put(Code.dup);
             Code.loadConst(0);
             Code.put(Code.jcc + Code.ne);
-            Code.put(loopStart - Code.pc);
+            Code.put2(loopStart - Code.pc + 1);
+
+            Code.put(Code.pop);
             Code.put(Code.pop);
         }
 

@@ -69,7 +69,7 @@ nonterminal VarDeclExpression, VarsList, VarDecl, OptVars, ArrOpt;
 nonterminal EnumDecl, EnumList, EnumMember, EnumInit, VarDeclExpressionList;
 nonterminal RetType, FormParams, FormPara, MethodDeclList;
 nonterminal Statements, Statement, FirstOptDesignator, SecondOptDesignator, OptDesignatorStatement, OptCondition, ExpressionToPrint;
-nonterminal DesignatorStmt, IfConditionForm, IfStart, ElsePart, ForStart;
+nonterminal DesignatorStmt, IfConditionForm, IfStart, ElsePart, ForStart, ForOptCondition;
 nonterminal ActualPars, ActualParamList, ActualParametar;
 nonterminal AssignOp, RelOp, Addop, MulOp;
 
@@ -223,9 +223,11 @@ IfStart ::= (IfStart) IF IfConditionForm;
 
 ElsePart ::= (ElsePart) ELSE;
 
-ForStart ::= (ForStart) FOR LPAREN FirstOptDesignator SEMI OptCondition SEMI SecondOptDesignator RPAREN;
+ForStart ::= (ForStart) FOR LPAREN FirstOptDesignator SEMI ForOptCondition SEMI SecondOptDesignator RPAREN;
 
 FirstOptDesignator ::= (FirstOptDesignator) OptDesignatorStatement;
+
+ForOptCondition ::= (ForOptCondition) OptCondition;
 
 OptCondition::= (Condition) ConditionDecl
                 |
