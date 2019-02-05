@@ -229,20 +229,20 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     //-----------------------VARIABLE------------------------------------------
 
     @Override
-    public void visit(VarDeclaration varDecl) {
+    public void visit(VarDeclaration varDeclaration) {
 
         if (currentTypeObj == SymbolTable.noObj) {
-            reportError("Variable type is not correct", varDecl); //bag from type
+            reportError("Variable type is not correct", varDeclaration); //bag from type
             return;
         }
 
-        String varName = varDecl.getVarName();
+        String varName = varDeclaration.getVarName();
         if (isDefinedInCurrentScope(varName) || isMethodAndVarWithSameName(varName)) {
-            reportError("Symbol used for variable name is already defined in this scope", varDecl);
+            reportError("Symbol used for variable name is already defined in this scope", varDeclaration);
             return;
         }
 
-        ArrOpt arrOpt = varDecl.getArrOpt();
+        ArrOpt arrOpt = varDeclaration.getArrOpt();
         if (arrOpt instanceof ArrayOption) {
             SymbolTable.insert(Obj.Var, varName, new Struct(Struct.Array, currentTypeObj.getType()));
         }
@@ -253,7 +253,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         if (currentMethod == SymbolTable.noObj) global_variables_count++;
         else local_variables_count++;
 
-        print_info("VarDecl visit", varDecl);
+        print_info("VarDeclaration visit", varDeclaration);
     }
 
 

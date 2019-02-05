@@ -20,6 +20,8 @@ public class CodeGenerator extends VisitorAdaptor {
     private static final int TWO_JMP_OFFSET_CONST_SIZE = 7;
     private static final int JMP_OFFSET_CONST_SIZE =4;
 
+    private static final int MAX_CODE_SIZE = 8192;
+
     private Logger logger = Logger.getLogger(getClass());
 
     public int getMainPC() {
@@ -116,6 +118,15 @@ public class CodeGenerator extends VisitorAdaptor {
 
         Code.put(Code.arraylength);
         Code.put(Code.return_);
+    }
+
+    @Override
+    public void visit(Program Program) {
+        super.visit(Program);
+
+        if (Code.pc >= 8192) {
+            logger.error("Program is too big. It has to be less than 8192 bytes!");
+        }
     }
 
     //-------------------------METHOD DECLARATION------------------------------
@@ -505,6 +516,8 @@ public class CodeGenerator extends VisitorAdaptor {
         }  else Code.put2(addressToPatchOld, currentAddress - addressToPatchOld + 1);
 
         jumpAddressStack.pushIfConditionAddressToPatch(newAddressToPatch);
+
+        //leaves nothing on stack
     }
 
     //---------------FOR STATEMENTS------------
@@ -551,7 +564,6 @@ public class CodeGenerator extends VisitorAdaptor {
 
             Code.put2(0);  //needs patch - END
 
-
             Code.put(Code.jmp);
             jumpAddressStack.setConditionToBodyStartAddressToPatch(Code.pc);
             Code.put2(0);  //needs patch - body start
@@ -564,7 +576,6 @@ public class CodeGenerator extends VisitorAdaptor {
         jumpAddressStack.setIteratorStatementStart(Code.pc);
 
         //leaves nothing on stack
-
     }
 
     @Override
@@ -584,7 +595,6 @@ public class CodeGenerator extends VisitorAdaptor {
         } else {
             jumpAddressStack.setIteratorStatementStart(jumpAddressStack.getConditionStart());
         }
-
 
         int bodyStartAddress = Code.pc;
         jumpAddressStack.setBodyStart(bodyStartAddress);

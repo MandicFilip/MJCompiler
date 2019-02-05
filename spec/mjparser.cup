@@ -130,7 +130,11 @@ VarDeclExpressionList ::= (OptVarDeclExpressionList) VarDeclExpressionList VarDe
                           (SingleOptVarDecl) VarDeclExpression
                           ;
 
-VarDeclExpression ::= (VarDeclarationExpression) Type:varType VarsList SEMI;
+VarDeclExpression ::= (VarDeclarationExpression) Type:varType VarsList SEMI
+                      |
+                      (VarDeclarationWithError) error SEMI
+                      {: parser.report_error("Bad variable declaration! ", null); :}
+                      ;
 
 VarsList ::= (VariablesList) VarsList COMMA VarDecl
              |

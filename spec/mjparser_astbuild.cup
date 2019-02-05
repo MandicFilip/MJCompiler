@@ -163,7 +163,11 @@ VarDeclExpressionList ::= (OptVarDeclExpressionList) VarDeclExpressionList:V1 Va
                           (SingleOptVarDecl) VarDeclExpression:V1 {: RESULT=new SingleOptVarDecl(V1); RESULT.setLine(V1left); :}
                           ;
 
-VarDeclExpression ::= (VarDeclarationExpression) Type:varType VarsList:V1 SEMI {: RESULT=new VarDeclarationExpression(varType, V1); RESULT.setLine(varTypeleft); :};
+VarDeclExpression ::= (VarDeclarationExpression) Type:varType VarsList:V1 SEMI {: RESULT=new VarDeclarationExpression(varType, V1); RESULT.setLine(varTypeleft); :}
+                      |
+                      (VarDeclarationWithError) error SEMI
+                      {: parser.report_error("Bad variable declaration! ", null); :} {: RESULT=new VarDeclarationWithError(); :}
+                      ;
 
 VarsList ::= (VariablesList) VarsList:V1 COMMA VarDecl:V2 {: RESULT=new VariablesList(V1, V2); RESULT.setLine(V1left); :}
              |
