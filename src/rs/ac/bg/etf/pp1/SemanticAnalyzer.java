@@ -456,7 +456,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
         Struct methodType = currentMethod.getType();
 
-        if (retType != methodType) {
+        if (!checkIfTypesAreCompatible(retType, methodType)) {
             reportError("Return type is wrong", returnExpStatement);
         }
 
@@ -468,7 +468,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         Obj designatorObj = readStatement.getDesignator().obj;
         Struct type = designatorObj.getType();
 
-        if (type != SymbolTable.intType && type != SymbolTable.charType && type != SymbolTable.boolType) {
+        if (!checkIfTypesAreCompatible(type, SymbolTable.intType) && type != SymbolTable.charType && type != SymbolTable.boolType) {
             reportError("Read parameter not a basic type", readStatement);
         }
 
