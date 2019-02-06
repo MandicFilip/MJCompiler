@@ -35,11 +35,19 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     private static int global_variables_count = 0;
 
     private Logger logger = Logger.getLogger(getClass());
+
+    private boolean debugLog = false;
     //----------------ERROR REPORT---------------------------------------------
 
     private void reportError(String message, SyntaxNode node) {
         errorsInCode = true;
         print_error(message, node);
+    }
+
+    private void reportInfo(String message, SyntaxNode node) {
+        debugLog = true;
+        print_info(message, node);
+        debugLog = false;
     }
 
     public boolean isErrorsInCode() {
@@ -62,6 +70,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     }
 
     private void print_info(String message, SyntaxNode node) {
+        if (!debugLog) return;
+
         StringBuilder builder = new StringBuilder(message);
         int line = (node == null) ? 0 : node.getLine();
         if (line != 0) {
@@ -233,6 +243,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         if (checkIfTypesAreAssignable(currentTypeObj.getType(), rightSide)) {
             Obj newConst = SymbolTable.insert(Obj.Con, constName, rightSide);
             newConst.setAdr(constValue); //init const
+            reportInfo("const named " + constDecl.getConstName() + " is defined. Object string:" + newConst.toString() + " ", constDecl);
         } else {
             reportError("Const init value has wrong type", constDecl);
         }
@@ -257,15 +268,19 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         }
 
         ArrOpt arrOpt = varDeclaration.getArrOpt();
+        Obj newVar;
         if (arrOpt instanceof ArrayOption) {
-            SymbolTable.insert(Obj.Var, varName, new Struct(Struct.Array, currentTypeObj.getType()));
+            newVar = SymbolTable.insert(Obj.Var, varName, new Struct(Struct.Array, currentTypeObj.getType()));
         }
         else {
-            SymbolTable.insert(Obj.Var, varName, currentTypeObj.getType());
+            newVar = SymbolTable.insert(Obj.Var, varName, currentTypeObj.getType());
         }
 
         if (currentMethod == SymbolTable.noObj) global_variables_count++;
         else local_variables_count++;
+
+
+        reportInfo("variable named " + varDeclaration.getVarName() + " is defined. Object string: " + newVar.toString() + " ", varDeclaration);
 
         print_info("VarDeclaration visit", varDeclaration);
     }
@@ -489,7 +504,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         }
         else type = ((OnlyExpressionToPrint) ex).getExpr().struct;
 
-        if (type != SymbolTable.intType && type != SymbolTable.charType && type != SymbolTable.boolType) {
+        if (!checkIfTypesAreCompatible(type, SymbolTable.intType) && type != SymbolTable.charType && type != SymbolTable.boolType) {
             reportError("Print expression is not a basic type", printStatement);
         }
 
@@ -689,6 +704,15 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             return;
         }
 
+        reportInfo("Access to array element of an " + designatorObj.getName(), arrayDesignator);
+
+        if (currentMethod != SymbolTable.noObj) {
+            if (arrayDesignator.obj.getLevel() > 0 && arrayDesignator.obj.getAdr() < currentMethod.getLevel()) {
+                reportInfo("Parameter used! Parameter name " + arrayDesignator.obj.getName() +
+                        ". Obj: " + arrayDesignator.obj.toString(), arrayDesignator);
+            }
+        }
+
         arrayDesignator.obj = new Obj(Obj.Elem, designatorObj.getName(), designatorObj.getType().getElemType());
 
         print_info("ArrayDesignator visit", arrayDesignator);
@@ -703,7 +727,15 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             reportError("Symbol used but never defined", simpleDesignator);
             simpleDesignator.obj = SymbolTable.noObj;
         }
-        print_info("SimpleDesignator", simpleDesignator);
+
+        if (currentMethod != SymbolTable.noObj) {
+            if (simpleDesignator.obj.getLevel() > 0 && simpleDesignator.obj.getAdr() < currentMethod.getLevel()) {
+                reportInfo("Parameter used! Parameter name " + simpleDesignator.obj.getName() +
+                        ". Obj: " + simpleDesignator.obj.toString(), simpleDesignator);
+            }
+        }
+
+        print_info("SimpleDesignator visit", simpleDesignator);
     }
 
     //-----------------------ACTUAL PARAMETERS---------------------------------
@@ -781,6 +813,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             }
             i++;
         }
+
+        reportInfo("Global method " + designatorObj.getName() + "is called. " + designatorObj.toString() + " ", methodCall);
 
         print_info("MethodCall visit", methodCall);
     }
