@@ -203,7 +203,7 @@ EnumInit ::= (SingleEnumInit) ASSIGNMENT NumberConst:enumMemberValue {: RESULT=n
 
 MethodDeclList ::= (MethodDeclarationList) MethodDeclList:M1 MethodDecl:M2 {: RESULT=new MethodDeclarationList(M1, M2); RESULT.setLine(M1left); :}
 					|
-					(NoMethodDecl) {: RESULT=new NoMethodDecl(); :}/* epsilon */
+					(NoMethodDecl) {: RESULT=new NoMethodDecl(); :}
 					;
 
 MethodDecl ::= (MethodDecl) MethodStart:M1 LPAREN FormParams:F2 RPAREN OptVars:O3 LBRACE Statements:S4 RBRACE {: RESULT=new MethodDecl(M1, F2, O3, S4); RESULT.setLine(M1left); :};
@@ -232,8 +232,8 @@ Statements ::= (StatementList) Statements:S1 Statement:S2 {: RESULT=new Statemen
 
 Statement ::= (DesignatorStatement) DesignatorStmt:D1 SEMI {: RESULT=new DesignatorStatement(D1); RESULT.setLine(D1left); :}
 			  |
-              Designator:D1 AssignOp:A2 error SEMI:l
-              {: parser.report_error("Bad assignment statement until ; on line " + lleft, null); :} {: RESULT=new StatementDerived1(D1, A2); RESULT.setLine(D1left); :}
+              (AssignmentError) Designator:D1 ASSIGNMENT error SEMI:l
+              {: parser.report_error("Bad assignment statement until ; on line " + lleft, null); :} {: RESULT=new AssignmentError(D1); RESULT.setLine(D1left); :}
               |
 			  (IfStatement) IfStart:I1 Statement:S2 {: RESULT=new IfStatement(I1, S2); RESULT.setLine(I1left); :}
 			  |
@@ -290,6 +290,9 @@ ExpressionToPrint ::= (OnlyExpressionToPrint) Expr:exprToPrint {: RESULT=new Onl
                       ;
 
 DesignatorStmt ::= (AssignDesignatorStatement) Designator:designator AssignOp:A1 Expr:expValue {: RESULT=new AssignDesignatorStatement(designator, A1, expValue); RESULT.setLine(designatorleft); :}
+                   |
+                   (ErrAssignment) Designator:D1 ASSIGNMENT error SEMI
+                   {: parser.log.debug("Uspesan oporavak od greske pri dodeli vrednosti."); :} {: RESULT=new ErrAssignment(D1); RESULT.setLine(D1left); :}
                    |
                    (MethodCallStatement) MethodCall:M1 {: RESULT=new MethodCallStatement(M1); RESULT.setLine(M1left); :}
                    |

@@ -170,7 +170,7 @@ EnumInit ::= (SingleEnumInit) ASSIGNMENT NumberConst:enumMemberValue
 
 MethodDeclList ::= (MethodDeclarationList) MethodDeclList MethodDecl
 					|
-					(NoMethodDecl)/* epsilon */
+					(NoMethodDecl)
 					;
 
 MethodDecl ::= (MethodDecl) MethodStart LPAREN FormParams RPAREN OptVars LBRACE Statements RBRACE;
@@ -199,7 +199,7 @@ Statements ::= (StatementList) Statements Statement
 
 Statement ::= (DesignatorStatement) DesignatorStmt SEMI
 			  |
-              Designator AssignOp error SEMI:l
+              (AssignmentError) Designator ASSIGNMENT error SEMI:l
               {: parser.report_error("Bad assignment statement until ; on line " + lleft, null); :}
               |
 			  (IfStatement) IfStart Statement
@@ -257,6 +257,9 @@ ExpressionToPrint ::= (OnlyExpressionToPrint) Expr:exprToPrint
                       ;
 
 DesignatorStmt ::= (AssignDesignatorStatement) Designator:designator AssignOp Expr:expValue
+                   |
+                   (ErrAssignment) Designator ASSIGNMENT error SEMI
+                   {: parser.log.debug("Uspesan oporavak od greske pri dodeli vrednosti."); :}
                    |
                    (MethodCallStatement) MethodCall
                    |

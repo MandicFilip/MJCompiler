@@ -60,7 +60,7 @@
 
     <target name="disasm">
         <java classname="rs.etf.pp1.mj.runtime.disasm">
-            <arg value="test/codeGenTests/out/out1011.obj" />
+            <arg value="test/codeGenTests/out/out302.obj" />
             <classpath>
                 <pathelement location="lib/mj-runtime.jar"/>
             </classpath>
@@ -69,7 +69,8 @@
 
     <target name="runObj" depends="disasm" >
         <java classname="rs.etf.pp1.mj.runtime.Run">
-            <arg value="test/codeGenTests/out/out1011.obj" />
+            <arg value="test/codeGenTests/out/out302.obj" />
+            <!-- <arg value="-debug" />  -->
             <classpath>
                 <pathelement location="lib/mj-runtime.jar" />
             </classpath>

@@ -115,6 +115,20 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         else return -1 * ((NegativeNumber) numberConst).getValue();
     }
 
+    private boolean checkIfTypesAreAssignable(Struct leftType, Struct rightType) {
+        if (leftType == SymbolTable.enumType && rightType == SymbolTable.intType) return true;
+        if (leftType == SymbolTable.intType && rightType == SymbolTable.enumType) return true;
+
+        return leftType.assignableTo(rightType);
+    }
+
+    private boolean checkIfTypesAreCompatible(Struct leftType, Struct rightType) {
+        if (leftType == SymbolTable.enumType && rightType == SymbolTable.intType) return true;
+        if (leftType == SymbolTable.intType && rightType == SymbolTable.enumType) return true;
+
+        return leftType.compatibleWith(rightType);
+    }
+
     //--------------------VISIT METHODS----------------------------------------
 
     //--------------------PROGRAM----------------------------------------------
@@ -216,7 +230,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             return;
         }
 
-        if (currentTypeObj.getType().assignableTo(rightSide)) {
+        if (checkIfTypesAreAssignable(currentTypeObj.getType(), rightSide)) {
             Obj newConst = SymbolTable.insert(Obj.Con, constName, rightSide);
             newConst.setAdr(constValue); //init const
         } else {
@@ -546,7 +560,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         Struct leftSideType = designatorObj.getType();
         Struct rightSideType = assignDesignatorStatement.getExpr().struct;
 
-        if (!leftSideType.assignableTo(rightSideType)) {
+        if (!checkIfTypesAreAssignable(leftSideType, rightSideType)) {
             reportError("Right side can't be assigned to left", assignDesignatorStatement);
         }
 
@@ -574,7 +588,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
         Struct type = designatorObj.getType();
 
-        if (!type.compatibleWith(SymbolTable.intType)) {
+        if (!checkIfTypesAreCompatible(type, SymbolTable.intType)) {
             reportError("Increment operator used on non integer type", incDesignatorStatement);
         }
 
@@ -596,7 +610,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
         Struct type = designatorObj.getType();
 
-        if (!type.compatibleWith(SymbolTable.intType)) {
+        if (!checkIfTypesAreCompatible(type, SymbolTable.intType)) {
             reportError("Decrement operator used on non integer type", decDesignatorStatement);
         }
 
@@ -665,7 +679,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             return;
         }
 
-        if (!arrayDesignator.getExpr().struct.compatibleWith(SymbolTable.intType)) {
+        if (!checkIfTypesAreCompatible(arrayDesignator.getExpr().struct, SymbolTable.intType)) {
             reportError("Expression in brackets can not be converted to integer type", arrayDesignator);
             return;
         }
@@ -762,7 +776,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             if (i >= formalParsNumber) break;
 
             Struct type = currentParameter.getType();
-            if (!actualParametersList.get(i).assignableTo(type)) {
+            if (!checkIfTypesAreAssignable(actualParametersList.get(i), type)) {
                 reportError("Actual parameter at position " + (i + 1) + " has wrong type", methodCall);
             }
             i++;
@@ -784,7 +798,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
                 return;
             }
         }
-        if (!type.compatibleWith(conditionFactor.getCondFact().struct)) {
+        if (!checkIfTypesAreCompatible(type, conditionFactor.getCondFact().struct)) {
             reportError("Incompatible types in condition check", conditionFactor);
         }
         conditionFactor.struct = SymbolTable.boolType;
@@ -847,7 +861,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         Struct leftType = termListExpr.getExpr().struct;
         Struct rightType = termListExpr.getTerm().struct;
 
-        if ((leftType != SymbolTable.intType) || (rightType != SymbolTable.intType)) {
+        if (!checkIfTypesAreCompatible(leftType, SymbolTable.intType) ||
+                !checkIfTypesAreCompatible(rightType, SymbolTable.intType)) {
             reportError("One of the condition factors in MulOp operator is not int type", termListExpr);
         }
         termListExpr.struct = SymbolTable.intType;
@@ -864,7 +879,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
     @Override
     public void visit(MinusTerm minusTerm) {
-        if (minusTerm.getTerm().struct != SymbolTable.intType) {
+        if(!checkIfTypesAreCompatible(minusTerm.getTerm().struct, SymbolTable.intType)) {
             reportError("Minus operator used on non int term", minusTerm);
         }
         minusTerm.struct = SymbolTable.intType;
@@ -884,7 +899,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         Struct leftType = factorListTerm.getTerm().struct;
         Struct rightType = factorListTerm.getFactor().struct;
 
-        if ((leftType != SymbolTable.intType) || (rightType != SymbolTable.intType)) {
+        if (!checkIfTypesAreCompatible(leftType, SymbolTable.intType) ||
+                !checkIfTypesAreCompatible(rightType, SymbolTable.intType)) {
             reportError("One of the condition factors in MulOp operator is not int type", factorListTerm);
         }
         factorListTerm.struct = SymbolTable.intType;
@@ -930,7 +946,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
     @Override
     public void visit(NewTypeFactor newTypeFactor) {
         newTypeFactor.struct = new Struct(Struct.Array, newTypeFactor.getType().struct);
-        if (newTypeFactor.getExpr().struct != SymbolTable.intType) {
+        if (!checkIfTypesAreCompatible(newTypeFactor.getExpr().struct, SymbolTable.intType)) {
             reportError("Expression in NEW statement is not int", newTypeFactor);
         }
 
