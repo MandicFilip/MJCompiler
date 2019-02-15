@@ -1,0 +1,25 @@
+program p
+    int x;
+    char c;
+    enum e{one = 1, two, three}
+{
+    void main()
+        char lc;
+        char arr[];
+    {
+        lc = '5';
+        c = lc;
+        x = ord(c);
+        print(c);
+        print(x);
+
+        arr = new char[5];
+        print(len(arr));
+
+
+        arr[2] = c;
+        print(arr[2]);
+        print(chr(x));
+    }
+}
+//should print 5 53 555

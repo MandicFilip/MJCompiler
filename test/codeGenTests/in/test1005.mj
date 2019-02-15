@@ -1,0 +1,13 @@
+program p
+    int x;
+    bool b;
+{
+    void main()
+    {
+        b = true;
+        print(b);
+        b = false;
+        print(b);
+    }
+}
+//should print: 1 0

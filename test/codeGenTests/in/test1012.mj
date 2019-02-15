@@ -1,0 +1,14 @@
+program p
+    int a;
+{
+    void f(int x) {
+        if (x > 0) f(x - 1);
+        print(x);
+    }
+
+    void main()
+    {
+        a = 5;
+        f(a);
+    }
+}

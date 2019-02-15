@@ -1,0 +1,42 @@
+program P
+    const int size = 10;
+    enum Num { ZERO, ONE, TEN = 10 }
+    int var1, var2[];
+{
+    void f(char ch, int a, int arg)
+        int x;
+        {
+            x = arg;
+        }
+        int retf(int a)
+        {
+            print(a + 2, 10, 20);
+            return a + 2;
+        }
+        void main()
+        int x, i;
+        char c;
+        { //‐‐‐‐‐‐‐‐‐‐ Initialize val
+            for (i = 0; i<size; i++)
+            {
+                x = x + 1;
+                continue;
+            }
+            f(c, x, i);
+            //‐‐‐‐‐‐‐‐‐‐ Read values
+            read(x);
+            for (;x > 0;)
+            {
+                if (Num.ZERO <= x && x < size)
+                {
+
+                } else
+                if (-size < x || x < 0 && x > 50)
+                {
+                    print(c);
+                    break;
+                }
+                read(x);
+            }
+        }
+}

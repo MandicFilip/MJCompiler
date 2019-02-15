@@ -1,0 +1,14 @@
+program p
+    int x;
+    int i;
+{
+    void main()
+    {
+        for(i = 1; i <= 5; i++)
+        {
+            print(i);
+        }
+    }
+}
+
+//Should print: 1 2 3 4 5

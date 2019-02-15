@@ -1,0 +1,13 @@
+//should test program basic scope declarations for level B
+program p
+    const int x = 5;
+    const char y = 'a';
+    enum myEnum{one, two, three}
+    int z;
+    const bool b1 = true;
+    const bool b2 = false;
+    char c;
+    bool b3;
+{
+
+}

@@ -14,13 +14,15 @@ public class CodeGenerator extends VisitorAdaptor {
     private static final int trueValue = 1;
     private static final int falseValue = 0;
 
-    private JumpAddressStack jumpAddressStack = new JumpAddressStack();
-
     private static final int TWO_JMP_OFFSET_SIZE = 6;
     private static final int TWO_JMP_OFFSET_CONST_SIZE = 7;
     private static final int JMP_OFFSET_CONST_SIZE =4;
 
     private static final int MAX_CODE_SIZE = 8192;
+
+    private JumpAddressStack jumpAddressStack = new JumpAddressStack();
+
+    private boolean isIncDecArrayElem = false;
 
     private Logger logger = Logger.getLogger(getClass());
 
@@ -40,6 +42,10 @@ public class CodeGenerator extends VisitorAdaptor {
         } else if (designator instanceof ArrayDesignator) {
             Obj arrayObj = designator.obj;
             Struct type = arrayObj.getType();
+
+            if (isIncDecArrayElem) {
+                Code.put(Code.dup2);
+            }
 
             if (type == SymbolTable.intType) {
                 Code.put(Code.aload);
@@ -124,7 +130,7 @@ public class CodeGenerator extends VisitorAdaptor {
     public void visit(Program Program) {
         super.visit(Program);
 
-        if (Code.pc >= 8192) {
+        if (Code.pc >= MAX_CODE_SIZE) {
             logger.error("Program is too big. It has to be less than 8192 bytes!");
         }
     }
@@ -421,7 +427,9 @@ public class CodeGenerator extends VisitorAdaptor {
         //takes nothing from stack
 
         Designator designator = incDesignatorStatement.getDesignator();
+        isIncDecArrayElem = true;
         loadDesignator(designator);
+        isIncDecArrayElem = false;
         Code.loadConst(1);
         Code.put(Code.add);
         storeDesignator(designator);
@@ -434,7 +442,9 @@ public class CodeGenerator extends VisitorAdaptor {
         //takes nothing from stack
 
         Designator designator = decDesignatorStatement.getDesignator();
+        isIncDecArrayElem = true;
         loadDesignator(designator);
+        isIncDecArrayElem = false;
         Code.loadConst(-1);       //Code.put(Code.const_m1);
         Code.put(Code.add);
         storeDesignator(designator);

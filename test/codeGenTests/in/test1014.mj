@@ -1,0 +1,18 @@
+program p
+    int x;
+    int y[];
+{
+    void main()
+    {
+        x = 5;
+        y = new int[x];
+        y[2] = 3;
+        print(y[2]);
+        y[2]++;
+        print(y[2]);
+        y[2]--;
+        print(y[2]);
+    }
+}
+
+//should print: 3 4 3

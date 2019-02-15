@@ -1,0 +1,26 @@
+//test for conditions
+program p
+    int x1, x2;
+    char c1, c2;
+    bool b;
+    int arr[];
+    enum e{one, two, three}
+{
+    void main()
+    {
+        if (x1 == arr[x2]) {}
+
+        if (c1 == c2) {}
+
+        if (b) {}
+
+        if (x1) {}               //error
+        if (c1) {}               //error
+        if (arr) {}              //error
+
+        if (c1 == x1) {}         //error
+
+        if (c1 == x1 && c1) {}   //error
+        if (c1 == x1 || c1) {}   //error
+    }
+}

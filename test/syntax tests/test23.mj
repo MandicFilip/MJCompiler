@@ -1,0 +1,48 @@
+program p
+    int x;
+{
+    void f1(int x, int 5, int y)
+    {
+
+    }
+
+    void f2(int 5)
+    {
+
+    }
+
+    void f3(int 5, int x)
+    {
+
+    }
+
+    void f4(int x, int 5)
+    {
+
+    }
+
+    void f5(x, int 5)
+    {
+
+    }
+
+    void f6(x)
+    {
+
+    }
+
+    void f7(x, 5)
+    {
+
+    }
+
+    void f8(int x, 5)
+    {
+
+    }
+
+    void main()
+    {
+
+    }
+}

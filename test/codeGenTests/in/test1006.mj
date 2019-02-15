@@ -1,0 +1,31 @@
+program p
+    int x;
+    bool b;
+{
+    void main()
+        int y;
+        {
+            x = 2;
+            y = 3;
+
+            if (x < y) print(x);
+            else print(y);
+
+            b = true;
+
+            if (b) print(1);
+
+            if (b && x < y) {
+                print(1);
+            }
+            if (b && x > y) {
+                print(x);
+            } else print(y);
+
+            if (b || x > y) print(1);
+            else print(0);
+
+        }
+}
+
+//should print: 2 1 1 3 1

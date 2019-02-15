@@ -114,7 +114,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
         return true;
     }
 
-
     private boolean isMainCorrect() {
         return currentMethod.getLevel() == 0 && currentMethod.getType() == SymbolTable.noType;
     }
@@ -597,7 +596,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             return;
         }
 
-        if (designatorObj.getKind() != Obj.Var) {
+        if (designatorObj.getKind() != Obj.Var && designatorObj.getKind() != Obj.Elem) {
             reportError("Increment operator used on non variable symbol", incDesignatorStatement);
         }
 
@@ -619,7 +618,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
             return;
         }
 
-        if (designatorObj.getKind() != Obj.Var) {
+        if (designatorObj.getKind() != Obj.Var && designatorObj.getKind() != Obj.Elem) {
             reportError("Decrement operator used on non variable symbol", decDesignatorStatement);
         }
 

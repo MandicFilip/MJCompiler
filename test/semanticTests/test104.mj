@@ -1,0 +1,44 @@
+//function call tests
+
+program p
+    int x;
+{
+    int f1(int a, int b)
+    {
+        return a + b;
+    }
+
+    bool f2(int a, int b)
+    {
+        if (a >= b) return true;
+        else return false;
+    }
+
+    void recursion(int a)
+    {
+        if (a > 0) recursion(a - 1);
+    }
+
+    void main()
+        int x, a, b;
+    {
+        a = 3;
+        b = 2;
+        x = f1(a, b);
+        x = a + f1(a, a + b) - (a - b * f1(a, b));
+        x = a + f1(a, f1(a, b));
+        recursion(x);
+
+        if (a > b)
+        {
+            if (a > b && a > f1(a, b))
+            {
+                if (x > b || f2(a, x) && f2(a, b))
+                {
+                    a = x;
+                    b = x;
+                }
+            }
+        }
+    }
+}

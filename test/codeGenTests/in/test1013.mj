@@ -1,0 +1,16 @@
+program p
+    enum e{one = 1, two, three}
+    e a;
+{
+    void main()
+        int x;
+
+    {
+        x = 2 + e.one - e.two;
+        print(x);
+        a = 5;
+        a = e.one;
+        print(e.two);
+        print(a);
+    }
+}

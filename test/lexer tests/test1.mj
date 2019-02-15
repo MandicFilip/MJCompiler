@@ -1,0 +1,55 @@
++
+++
+-
+--
+*
+/
+%
+,
+.
+;
+=
+==
+!=
+<
+<=
+>
+>=
+if
+else
+for
+print
+read
+return
+void
+true
+false
+continue
+break
+(
+)
+[
+]
+{
+}
+ident
+snake_case
+1
+123
++22
+-22
+'a' //ne radi a = '' i a = 'abc' !
+program P
+{
+    const int x = 5; //first comment
+    enum myEnum{first, second};
+    void f()
+    {
+
+    }
+
+    void main()
+    {
+
+    }
+}

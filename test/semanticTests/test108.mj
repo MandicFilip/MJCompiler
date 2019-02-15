@@ -1,0 +1,10 @@
+program p
+    int v[];
+    enum e1{one, two, three}
+
+{
+    void main()
+    {
+        v[1] = e1.one;
+    }
+}

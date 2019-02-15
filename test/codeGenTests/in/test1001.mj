@@ -1,0 +1,23 @@
+program p
+    const int x = 2;
+    int y;
+    enum e{one = 1, two, three}
+{
+    void main()
+    int a;
+    {
+        a = 5;
+        y = a + x;
+        print(y);
+
+        y++;
+        print(y);
+
+        y--;
+        print(y);
+
+        y = a + a * x - x + e.two;
+        print(y);
+    }
+}
+//should print: 7 8 7 15

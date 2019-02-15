@@ -1,0 +1,61 @@
+//return statement tests
+
+program p
+    int x;
+    enum e1{one, two, three}
+{
+    void f1(int a, int b)
+    {
+        return a + b;
+    }
+
+    int f2(int a)
+    {
+        //error missing return
+    }
+
+    void f3(int a)
+    {
+        return a;     //error void returns value
+    }
+
+    char f4(int a)
+    {
+        return a;     //error wrong return type
+    }
+
+    bool f5(int a)
+    {
+        return a;     //error wrong return type
+    }
+
+    void f7(int a)
+    {
+        return;
+    }
+
+    int f8(int a, int b)
+    {
+        return a * a + b - (a % b);
+    }
+
+    int f9(int a, int b[])
+    {
+        return a + b[a];
+    }
+
+    int f10(int b[])
+    {
+        return b[e1.two];
+    }
+
+    int f11()
+    {
+        return e1.three;
+    }
+
+    void main()
+    {
+
+    }
+}

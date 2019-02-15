@@ -1,0 +1,28 @@
+program p
+    int x;
+    enum e{one = 1, two, three}
+{
+    void main()
+        int arr[];
+    {
+        x = 4;
+        arr = new int[5];
+        print(arr[0]);
+
+        arr[0] = 0;
+        arr[e.one] = e.one;
+        arr[e.two] = e.two;
+        arr[e.three] = e.three;
+        arr[x] = -x;
+
+        print(arr[0]);
+        print(arr[1]);
+        print(arr[2]);
+        print(arr[3]);
+        print(arr[4]);
+
+        x = arr[0];
+        print(x);
+    }
+}
+//should print: 0 0 1 2 3 -4 0

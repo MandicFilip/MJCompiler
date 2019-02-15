@@ -1,0 +1,50 @@
+//predefined functions
+
+program p
+    int x;
+    char c;
+    bool b;
+    enum e1{one = 1, two, three}
+    int arr[];
+{
+    void main()
+    {
+        read(x);
+        read(c);
+        read(b);
+        read(e1.one);    //expected variable
+        read(arr);       //expected simple type
+
+        print(x);
+        print(c);
+        print(b);
+        print(arr[x]);
+        print(e1.one);
+
+        print(x, 5);
+        print(c, 5);
+        print(b, 5);
+
+        len(arr);
+        len(x);           //error expected array
+        len(c);           //error expected array
+        len(b);           //error expected array
+
+        chr(x);
+        chr(arr[x]);
+        chr(e1.one);
+
+        chr(arr);          //error expected int
+        chr(c);            //error expected int
+        chr(b);            //error expected int
+
+        ord(c);
+        ord(eol);
+
+        ord(x);               //error expected char
+        ord(b);               //error expected char
+        ord(arr);             //error expected char
+        ord(e1.one);          //error expected char
+        ord(arr[x]);            //error expected char
+    }
+}

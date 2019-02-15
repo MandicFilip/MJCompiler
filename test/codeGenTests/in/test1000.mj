@@ -1,0 +1,10 @@
+program p
+    const int x = 5;
+{
+    void main()
+    {
+        print(x);
+        print(5);
+    }
+}
+//should print: 5 5

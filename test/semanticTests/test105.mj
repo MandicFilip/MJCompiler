@@ -1,0 +1,61 @@
+//actual parameters test
+
+program p
+    int a;
+    int b[];
+    char c;
+    const int i = 2;
+    const bool b1 = true;
+    enum e{one = 1, two, three}
+{
+        void f1()
+        {
+
+        }
+
+        void f2(int a)
+        {
+
+        }
+
+        void f3(int a, char c)
+        {
+
+        }
+
+        void f4(int a[], bool b)
+        {
+
+        }
+
+        void main()
+        {
+            f1();
+            f1(i);      //error wrong number of parameters
+
+            f2(i);
+            f2(e.one);
+            f2(b[e.one]);
+
+            f2(c);                 //wrong type int expected char passed
+            f2(b);                 //wrong type int expected int array passed
+            f2(b1);                //wrong type int expected boolean passed
+            f2();                  //wrong number of parameters
+
+            f3(a, c);
+            f3();                  //wrong number of parameters
+            f3(i, a);              //wrong type for second parameter char expected int passed
+            f3(i, b1);             //wrong type for second parameter char expected bool passed
+            f3(i, b);              //wrong type for second parameter char expected int array passed
+
+            f4(b, b1);
+
+            f4(b, a);              //wrong type for second parameter bool expected int passed
+            f4(b, b);              //wrong type for second parameter bool expected int array passed
+            f4(b, c);              //wrong type for second parameter bool expected char passed
+
+            f4(a, b1);              //wrong type for first parameter int array expected int passed
+            f4(b1, b1);             //wrong type for first parameter int array expected bool passed
+            f4(c, b1);              //wrong type for first parameter int array expected char passed
+        }
+}

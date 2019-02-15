@@ -19,7 +19,7 @@ public class Compiler {
     }
 
     public static void main(String[] args) throws Exception {
-        Logger log = Logger.getLogger(MJParserTest.class);
+        Logger log = Logger.getLogger(Compiler.class);
         if (args.length < 1) {
             log.error("Not enough arguments supplied! Usage: MJParser <source-file> <obj-file> ");
             return;

@@ -1,0 +1,29 @@
+program p
+    int x;
+    int y;
+    enum e{one = 1, two, three}
+{
+    int f()
+    {
+        return e.three;
+    }
+
+    void main()
+        int arr[];
+    {
+        arr = new int[5];
+        x = e.one;
+
+        x = f();
+        print(x);
+
+        x = 48;
+        for(y = 0; y < 10; y++) {
+            if (y < 5) continue;
+
+            print(chr(x + y));
+        }
+    }
+}
+
+//should print: 356789
