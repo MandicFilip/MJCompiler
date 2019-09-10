@@ -12,7 +12,7 @@ JFlex library was used to generate lexer(Yylex class). Specification for JFlex c
 
 Cup library was used to generate parser. Cup generates sym and MJParser classes using Yylex class and specification(directory spec, file mjparser.cup).
 
-In semantic analysis and gode generation library SymbolTable was used. 
+In semantic analysis and code generation library SymbolTable was used. 
 
 In code generation library mj-runtime was used as buffer for generated code. This library also has classes Run and Disasm, which can run and print generated code.
 
